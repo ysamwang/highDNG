@@ -1,0 +1,162 @@
+findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, fun = max,
+                           subsets = F, B = NULL, cutOffScaling = .5, verbose = T) {
+  
+  # check to make sure the function used to aggregate is either sum or max
+  if(!identical(fun, sum) && !identical(fun, max)){
+    print("Unrecognized function")
+    stop()
+  }
+  
+  # helper to calculate the Test Statistic
+  .calcTau <- function(k, pa, ch) {
+    abs(mean(pa^(k - 1) * ch) * mean(pa^2) - mean(pa^k) * mean(pa * ch))
+  }
+  
+  # helper to go through all sets
+  .getTauSingle <- function(i, j, degree, conditionSet, maxInDegree){
+    
+    ####### Set up #######
+    j <- setdiff(j, i)
+    p <- dim(Y)[2]
+    pruneStat <- rep(1e5, p)
+    tauStat <- 1e5
+    
+    if(length(conditionSet) == 0){ 
+      ### Should only be run when ordered = NULL
+      pruneStat[j] <- sapply(j, function(j){.calcTau(degree, Y[, i], Y[, j])})
+      tauStat <- fun( pruneStat[j] )
+      return(list(pruneStat = pruneStat, tauStat = tauStat))
+      
+    } else {
+
+      
+      ### If considering all subsets smaller than maxInDegree, then start at subset of 
+      ### largest.set.size is the largest set we should consider
+      largest.set.size <- min(maxInDegree, length(conditionSet))
+      
+      if(subsets){  
+        size.of.set <- 1
+      } else {
+        # If we only test subsets of the max size, then go to that size immediately
+        size.of.set <- largest.set.size
+      }
+      
+      ### Start testing subsets of an appropriate size
+      while(size.of.set <= largest.set.size){
+        
+        ### Ensure that each conditioning sub-set includes the last node
+        ### So that we are not re-testing conditioning sets
+        conditionSubSet <- t(combn(conditionSet, size.of.set))
+
+        
+        ### calculate regression for each possible conditioning set
+        for(z in 1:dim(conditionSubSet)[1]){
+          res <- RcppArmadillo::fastLm(X = Y[, conditionSubSet[z, ]], y = Y[, i])$residual
+          
+          # Update the tau for all currently unordered nodes
+          pruneStat[j] <- pmin(pruneStat[j], 
+                               sapply(j, function(j){.calcTau(k = degree, pa = res, ch = Y[, j])}
+                                      )
+                               )
+          
+          # update tauStat
+          tauStat <- min(tauStat, fun( pruneStat[j] ))
+          
+          # Update the tau for ancestors but possibly not parents      
+          conditionNodesToTest <- setdiff(conditionSet, conditionSubSet[z, ])
+          
+          pruneStat[conditionNodesToTest] <- pmin(pruneStat[conditionNodesToTest],
+                                                  sapply(conditionNodesToTest, function(j){.calcTau(k = degree, pa = res,
+                                                                                                    ch = Y[, j])}
+                                                         )
+                                                  )
+        }
+        
+        # increase the size of the set
+        size.of.set <- size.of.set + 1
+        
+        
+      } # end while 
+      
+      
+      
+      # only return the test stat values which were ever touched
+      return(list(pruneStat = pruneStat, tauStat = tauStat))
+    }
+  }
+  ################### End getTau Function ###################
+  
+  if(is.null(pruningCut)){
+    cutOff <- 0
+  } else {
+    cutOff <- pruningCut
+  }  
+  
+  # topological ordering of nodes
+  ordered <- c()
+  p <- dim(Y)[2]
+  
+  # set of nodes which have not yet been ordered
+  unordered <- c(1:p)
+  
+  ### Record of lowest tau value achieved so far
+  pruneStats <- matrix(1e5, nrow =  p, ncol = p)
+  diag(pruneStats) <- 0
+  
+  while(length(unordered) > 1){
+    
+    # Testing for Root
+    output <- foreach(i = unordered) %dopar%{
+      
+      if(!is.null(B)){
+        condSet <- intersect(which(B[i, ] != 0), ordered)
+      } else {
+        condSet <- union(intersect(ordered, which(pruneStats[i, ] > cutOff)), ordered[length(ordered)])  
+      }
+      ### Test to see if i has any parents left in unordered
+      .getTauSingle(i, j = unordered, degree = degree, conditionSet = condSet,
+                   maxInDegree = maxInDegree)
+    }
+    
+    ### Suspicious of this ###
+    output_pruneStats <- t(sapply(output, function(x){x$pruneStat}))
+    
+    output_tauStats <- sapply(output, function(x){x$tauStat})
+    # Update pruneStats
+    pruneStats[unordered, ] <- pmin(pruneStats[unordered, ], output_pruneStats)
+    
+    
+
+    root <- unordered[which.min(output_tauStats)]
+    
+    # Update cutoff if pruningCut is not set to a fixed value
+    if(is.null(pruningCut)){
+      cutOff <- max(cutoff, min(output_tauStats) * cutOffScaling)
+    }
+    
+    # Update quantities
+    # 
+    if(verbose){
+      cat("====")
+      cat(length(ordered))
+      cat("====\n")
+      cat("Roots: "); cat(root); cat("; Parents: ")
+      
+      cat(ordered[which(pruneStats[root, ordered] > cutOff)])
+      cat("\n")
+      cat("\n")
+      
+      names(output_tauStats) <- unordered
+      print(round(output_tauStats, 3))
+      cat("Cutoff: "); cat(round(cutOff,3)); cat("\n\n")
+    }
+    
+    ordered <- c(ordered, root)
+    unordered <- setdiff(unordered, root)
+    
+    
+  }
+   
+  
+  return(list(topOrder = c(ordered, unordered), prune = pruneStats))
+}
