@@ -1,3 +1,22 @@
+#############################################################################################################
+#     Recover graph from observational non-Gaussian Data
+#
+#     We calculate tau_i <- max_j min_C tau_{i-> j.C}
+#
+#
+# Y:              n x p matrix of observations with sample in row, variable in column
+# maxInDegree:    Assumed largest in-degree
+# degree:         The assumed degree of non-Gaussianity
+# pruningCut:     Fixed cut-off value
+# fun:            The aggregation function. Should be max
+# subsets:        Whether to condition on all subsets of variables, or just test sets of largest size
+# B:              True DAG structure if available
+# cutOffScaling:  Scaling factor for how to set the cutOff
+# verbose:        Print progress updates
+#
+#############################################################################################################
+
+
 findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, fun = max,
                       subsets = F, B = NULL, cutOffScaling = .5, verbose = T) {
   
@@ -184,8 +203,8 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, fu
       cat("\n")
       cat("\n")
       
-      names(output_tauStats) <- unordered
-      print(round(output_tauStats, 3))
+      # names(output_tauStats) <- unordered
+      # print(round(output_tauStats, 3))
       cat("Cutoff: "); cat(round(cutOff,3)); cat("\n\n")
     }
     

@@ -1,3 +1,21 @@
+#############################################################################################################
+#     Recover graph from observational non-Gaussian Data
+#
+#     We calculate tau_i <- min_C max_j tau_{i-> j.C}
+#
+#
+# Y:              n x p matrix of observations with sample in row, variable in column
+# maxInDegree:    Assumed largest in-degree
+# degree:         The assumed degree of non-Gaussianity
+# pruningCut:     Fixed cut-off value
+# fun:            The aggregation function. Should be max
+# subsets:        Whether to condition on all subsets of variables, or just test sets of largest size
+# B:              True DAG structure if available
+# cutOffScaling:  Scaling factor for how to set the cutOff
+# verbose:        Print progress updates
+#
+#############################################################################################################
+
 findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, fun = max,
                            subsets = F, B = NULL, cutOffScaling = .5, verbose = T) {
   
