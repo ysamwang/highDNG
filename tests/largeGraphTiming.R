@@ -1,3 +1,10 @@
+######################################################
+#
+# timing for large graphs
+#
+######################################################
+
+
 p <- 500
 n <- 1000
 ncores <- 6
@@ -5,8 +12,8 @@ sim.size <- 5
 
 
 library(doParallel)
-source("rDAG.R")
-source("findGraphMulti.R")
+source("functions/rDAG.R")
+source("functions/findGraphMulti.R")
 
 cl <- makeCluster(ncores)
 registerDoParallel(cl)
@@ -33,6 +40,6 @@ for(i in 1:sim.size){
 }
 stopCluster(cl)
 
-write.table(cor.rec, file = "testOutput/cor_rec_highD.csv", sep = ",")
-write.table(timing.rec, file = "testOutput/timing_rec_highD.csv", sep = ",")
+write.table(cor.rec, file = "testOutput/cor_p500n1000unif.csv", sep = ",")
+write.table(timing.rec, file = "testOutput/timing_p500n1000unif.csv", sep = ",")
             

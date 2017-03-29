@@ -72,22 +72,18 @@ findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, f
           res <- RcppArmadillo::fastLm(X = Y[, conditionSubSet[z, ]], y = Y[, i])$residual
           
           # Update the tau for all currently unordered nodes
-          pruneStat[j] <- pmin(pruneStat[j], 
-                               sapply(j, function(j){.calcTau(k = degree, pa = res, ch = Y[, j])}
-                                      )
-                               )
+          tau.C <- sapply(j, function(j){.calcTau(k = degree, pa = res, ch = Y[, j])})
+          pruneStat[j] <- pmin(pruneStat[j], tau.C)
           
           # update tauStat
-          tauStat <- min(tauStat, fun( pruneStat[j] ))
+          tauStat <- min(tauStat, fun( tau.C ))
           
           # Update the tau for ancestors but possibly not parents      
           conditionNodesToTest <- setdiff(conditionSet, conditionSubSet[z, ])
           
           pruneStat[conditionNodesToTest] <- pmin(pruneStat[conditionNodesToTest],
                                                   sapply(conditionNodesToTest, function(j){.calcTau(k = degree, pa = res,
-                                                                                                    ch = Y[, j])}
-                                                         )
-                                                  )
+                                                                                                    ch = Y[, j])}))
         }
         
         # increase the size of the set
@@ -102,6 +98,7 @@ findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, f
       return(list(pruneStat = pruneStat, tauStat = tauStat))
     }
   }
+  
   ################### End getTau Function ###################
   
   if(is.null(pruningCut)){
@@ -149,11 +146,10 @@ findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, f
     
     # Update cutoff if pruningCut is not set to a fixed value
     if(is.null(pruningCut)){
-      cutOff <- max(cutoff, min(output_tauStats) * cutOffScaling)
+      cutOff <- max(cutOff, max(pruneStats[root, ]) * cutOffScaling)
     }
     
-    # Update quantities
-    # 
+    # Print
     if(verbose){
       cat("====")
       cat(length(ordered))
@@ -169,9 +165,9 @@ findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, f
       cat("Cutoff: "); cat(round(cutOff,3)); cat("\n\n")
     }
     
+    # Update topological ordering
     ordered <- c(ordered, root)
     unordered <- setdiff(unordered, root)
-    
     
   }
    

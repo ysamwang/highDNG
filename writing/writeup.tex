@@ -1,0 +1,586 @@
+\documentclass[]{article}
+\usepackage{amsmath, amsfonts,tikz, algorithmicx, amsthm}
+\usepackage{algpseudocode,algorithm} 
+\usepackage[margin = 1in]{geometry}
+\usetikzlibrary{shapes,arrows,positioning}
+
+\setlength{\parskip}{1em}
+\setlength{\parindent}{0em}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+
+\newcommand\independent{\protect\mathpalette{\protect\independenT}{\perp}}
+\def\independenT#1#2{\mathrel{\rlap{$#1#2$}\mkern2mu{#1#2}}}
+
+
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\an}{{\rm an}}       %for ancestors
+\newcommand{\An}{{\rm An}}       %for ancestors
+\newcommand{\de}{{\rm de}}       %for descendants
+\newcommand{\ch}{{\rm ch}}       %  for children
+\newcommand{\pa}{{\rm pa}}       % for parents
+\newcommand{\sib}{{\rm sib}}	   % for siblings (aka spouses)
+\newcommand{\Pa}{{\rm Pa}}       % for parents
+
+%opening
+\title{High Dimensional Non-Gaussian DAG Selection}
+\author{}
+\begin{document}
+
+\maketitle
+
+
+
+
+\section{Notation}
+
+For $j \in C \subseteq V$, let $\beta_{ij.C}$ be regression coefficient of $j$ when $i$ is regressed on $C$
+\[\beta_{ij.C} = \left[\left(\E\left(Y_{C}Y_{C}^T\right)\right)^{-1} \E(Y_{C}^T Y_i)\right]_j.\]
+
+Denote the residuals when $i$ is regressed on $C$ as
+\[i.C = Y_i - \sum_{j \in C}\beta_{ij.C}Y_j.\]
+
+For some set of nodes $D \subseteq V$ and $a \in \mathbb{N}^{|D|}$, let
+\[m_{D(a)} = \E\left(\prod_{d \in D} (Y_d)^{a_d}\right).\]
+
+
+
+\section{Parameter and  Test Statistic}
+\begin{theorem}
+Consider the SEM associated with DAG $\mathcal{G} = \{V, E\}$.  
+\begin{enumerate}
+\item[(1)]
+Suppose $j \not\in \pa(i)$. Let $C = \{C_1 =\pa(i), C_2 = \emptyset\}$, then 
+
+\[\tau _{i\rightarrow j.C} =  m_{\{i,j\}(K-1,1).C} m_{\{i,j\}(2,0).C} - m_{\{i,j\}(K,0).C}m_{\{i,j\}(1,1).C} = 0 \]
+
+\item[(2)] Suppose $j \in \pa(i)$ and the errors are Gaussian. Let $C = \{C_1 =\pa(i)\setminus \{j\}, C_2 = \emptyset\}$ then
+\[m_{\{j,i\}(K-1,1).C} m_{j(2).C} - m_{j(K).C}m_{\{j,i\}(1,1).C} = 0 \]
+
+
+\item[(3)] Suppose $j \in \pa(i)$, Let $C = \{C_1 =\pa(i)\setminus \{j\}, C_2 = \emptyset\}$ then generically (wrt error moments)
+\[m_{\{j,i\}(K-1,1).C} m_{j(2).C} - m_{j(K).C}m_{\{j,i\}(1,1).C} \neq 0 \]
+
+
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+The statements are shown via direct calculation.
+
+\textbf{Statement (1):} 
+
+Let $\tilde Y_i = Y_i - \beta_{iC_1.C_1}Y_{C_1} = \epsilon_i$ and $\pi_{jz}$ be the sum of all directed path weights from $z$ to $j$, then
+
+\begin{equation}
+\begin{aligned}
+\tau _{i\rightarrow j.C} &=  m_{\{i,j\}(K-1,1).C} m_{\{i,j\}(2,0).C} - m_{\{i,j\}(K,0).C}m_{\{i,j\}(1,1).C}
+\\
+& = \E(\tilde Y_i^{K-1}Y_j) \E(\tilde Y_i^2) - \E(\tilde Y_i^K) \E(\tilde Y_i Y_j)
+\\
+&=  \E\left(\epsilon_i^{K-1} \left[\epsilon_j + \pi_{ji}\epsilon_i + \sum_{z \in \an(j)} \pi_{jz}\epsilon_z \right]\right) 
+\E\left(\epsilon_i^2\right)
+\\
+&\quad - \E\left(\epsilon_i^K\right) \E\left(\epsilon_i  \left[\epsilon_j + \pi_{ji}\epsilon_i + \sum_{z \in \an(j)} \pi_{jz}\epsilon_z \right]\right)
+\\
+&=  \pi_{ji}\E\left(\epsilon_i^K \right) 
+\E\left(\epsilon_i^2\right) - \pi_{ji}\E\left(\epsilon_i^K\right) \E\left(\epsilon_i^2\right)
+\\
+& = 0
+\end{aligned}
+\end{equation}
+
+Note that if there is no directed path from $i$ to $j$, then $\pi_{ij} = 0$ and the statement still holds.
+
+\textbf{Statement (2):}
+
+Now suppose that $j \in \pa(i)$, then 
+\[\tilde Y_i = Y_i - \beta_{iC_1.C_1}Y_{C_1} = \epsilon_i + \beta_{ij}Y_j\]
+
+\begin{equation}
+\begin{aligned}
+\E(\tilde Y_i^{K-1}Y_j)\E(\tilde Y_i^2) - \E(\tilde Y_i^K)\E(\tilde Y_iY_j)
+& = 
+\left(\sum_{a = 0}^{K-1}{K-1 \choose a} \beta_{ij}^{K-1 - a}\E\left(\epsilon_i^a\right) \E\left(Y_j^{K-a}\right)\right) \left(\E(\epsilon_i^2)  + \beta_{ij}^2\E(Y_j^2) \right)
+\\
+&\quad - \left(\sum_{a = 0}^K {K \choose a} \E\left(\epsilon_i^a \right) \beta_{ij}^{K - a}\E\left(Y_j^{K - a}\right)\right)
+\left(\beta_{ij}\E\left(Y_j^2\right) \right)
+\end{aligned}
+\end{equation}
+If the errors are Gaussian and $K$ is odd, then $\E(\epsilon_i^a)\E(Y_j^{K-a}) = 0$ for all $a = 0, \ldots K$, so the entire term is 0. 
+
+If $K$ is even, then $\E(\epsilon_i^a)\E(Y_j^{K-a}) = 0$ when $a$ is odd, so 
+\begin{equation}
+\begin{aligned}
+&= \left(\sum_{a = 0,2,\ldots K-2}{K-1 \choose a} \beta_{ij}^{K-1 - a}\E\left(\epsilon_i^a\right) \E\left(Y_j^{K-a}\right)\right) \left(\E(\epsilon_i^2)  + \beta_{ij}^2\E(Y_j^2) \right)
+\\
+&\quad - \left(\sum_{a = 0,2,\ldots K}{K \choose a} \E\left(\epsilon_i^\alpha\right) \beta_{ij}^{K - a}\E\left(Y_j^{K - a}\right)\right)\left(\beta_{ij}\E\left(Y_j^2\right) \right)
+\\
+&=\left(\sum_{a = 0,2,\ldots K-2}{K-1 \choose a} \beta_{ij}^{K-1 - a}\E\left(\epsilon_i^a\right) \E\left(Y_j^{K-a}\right)\right) \left(\E(\epsilon_i^2)  + \beta_{ij}^2\E(Y_j^2) \right)
+\\
+&\quad - \left(\sum_{a = 0,2,\ldots K}{K \choose a} \E\left(\epsilon_i^\alpha\right) \beta_{ij}^{K - a}\E\left(Y_j^{K - a}\right)\right)\left(\beta_{ij}\E\left(Y_j^2)\right) \right)
+\\
+&= \left(\sum_{a = 0,2,\ldots K-2}{K-1 \choose a} \beta_{ij}^{K-1 - a}a!! \sigma_{\epsilon_i}^a (K-a)!!\sigma_{Y_j}^{K-a}\right) \left(\sigma_{\epsilon_i}^2  + \beta_{ij}^2\sigma_{Y_j}^2 \right)
+\\
+&\quad - \left(\sum_{a = 0,2,\ldots K-2}{K-1 \choose a}\frac{K}{K-a} a!!\sigma_{\epsilon_i}^a \beta_{ij}^{K - a}(K-a)!!\sigma_{Y_j}^{K-a}\right)\left(\beta_{ij}\sigma_{Y_j}^2\right) - K!!\sigma_{\epsilon_i}^K\beta_{ij}\sigma_{Y_j}^2
+\\
+&= \beta_{ij}\sigma_{Y_j}^2\left(\sum_{a = 0,2,\ldots K-2}{K-1 \choose a} \beta_{ij}^{K- (a+2)}a!! \sigma_{\epsilon_i}^{a+2} (K-a)!!\sigma_{Y_j}^{K-(a+2)}\right) 
+\\
+& \quad + \beta_{ij}^2\sigma_{Y_j}^2\left(\sum_{a = 0,2,\ldots K-2}{K-1 \choose a} \beta_{ij}^{K-1 - a}a!! \sigma_{\epsilon_i}^{a} (K-a)!!\sigma_{Y_j}^{K-a}\right)  \\
+&\quad - \left(\sum_{a = 0,2,\ldots K-2}{K-1 \choose a}\frac{K}{K-a} a!!\sigma_{\epsilon_i}^a \beta_{ij}^{K - a}(K-a)!!\sigma_{Y_j}^{K-a}\right)\left(\beta_{ij}\sigma_{Y_j}^2\right) - K!!\sigma_{\epsilon_i}^K\beta_{ij}\sigma_{Y_j}^2
+\\
+&= K!!\sigma_{\epsilon_i}^K\beta_{ij}\sigma_{Y_j}^2 + \beta_{ij}\sigma_{Y_j}^2\left(\sum_{a = 0,2,\ldots K-4}{K-1 \choose a+2}\frac{(a+1)(a+2)}{(K-2-a)(K-1-a)} \beta_{ij}^{K- (a+2)}a!! \sigma_{\epsilon_i}^{a+2} (K-a)!!\sigma_{Y_j}^{K-(a+2)}\right) 
+\\
+& \quad + \beta_{ij}\sigma_{Y_j}^2\left(\sum_{a = 0,2,\ldots K-2}{K-1 \choose a} \beta_{ij}^{K-1 - a}a!! \sigma_{\epsilon_i}^{a} (K-a)!!\sigma_{Y_j}^{K-a}\right)\frac{-a}{K-a}  - K!!\sigma_{\epsilon_i}^K\beta_{ij}\sigma_{Y_j}^2\\
+&= \beta_{ij}\sigma_{Y_j}^2\left(\sum_{a = 0,2,\ldots K-4}{K-1 \choose a+2}\frac{(a+2)}{(K-(a+2))} \beta_{ij}^{K- (a+2)}(a+2)!! \sigma_{\epsilon_i}^{a+2} (K-(a+2))!!\sigma_{Y_j}^{K-(a+2)}\right) 
+\\
+& \quad + \beta_{ij}\sigma_{Y_j}^2\left(\sum_{a = 0,2,\ldots K-2}{K-1 \choose a} \beta_{ij}^{K-1 - a}a!! \sigma_{\epsilon_i}^{a} (K-a)!!\sigma_{Y_j}^{K-a}\right)\frac{-a}{K-a}
+\\
+&= \beta_{ij}\sigma_{Y_j}^2\left(\sum_{b = 2,\ldots K-2}{K-1 \choose b}\frac{b}{(K-b)} \beta_{ij}^{K- b}(b)!! \sigma_{\epsilon_i}^{b} (K-b)!!\sigma_{Y_j}^{K-b}\right) 
+\\
+& \quad + \left(\sum_{a = 0,2,\ldots K-2}{K-1 \choose a} \beta_{ij}^{K-1 - a}a!! \sigma_{\epsilon_i}^{a} (K-a)!!\sigma_{Y_j}^{K-a}\right)\frac{-a}{K-a}\\
+&= {K-1 \choose 0} \beta_{ij}^{K-1 - 0}0!! \sigma_{\epsilon_i}^{0} (K-0)!!\sigma_{Y_j}^{K-0}\frac{0}{K-0} = 0\\
+\end{aligned}
+\end{equation}
+
+\textbf{Statement (3)}
+As before, 
+\begin{equation}
+\begin{aligned}
+\E(\tilde Y_i^{K-1}Y_j)\E(\tilde Y_i^2) - \E(\tilde Y_i^K)\E(\tilde Y_iY_j)
+& = 
+\left(\sum_{a = 0}^{K-1}{K-1 \choose a} \beta_{ij}^{K-1 - a}\E\left(\epsilon_i^a\right) \E\left(Y_j^{K-a}\right)\right) \left(\E(\epsilon_i^2)  + \beta_{ij}^2\E(Y_j^2) \right)
+\\
+&\quad - \left(\sum_{a = 0}^K {K \choose a} \E\left(\epsilon_i^a \right) \beta_{ij}^{K - a}\E\left(Y_j^{K - a}\right)\right)
+\left(\beta_{ij}\E\left(Y_j^2\right) \right)
+\\
+& = 
+\left(\sum_{a = 1}^{K-1}{K-1 \choose a} \beta_{ij}^{K-1 - a}\E\left(\epsilon_i^a\right) \E\left(Y_j^{K-a}\right)\right) \left(\E(\epsilon_i^2)  + \beta_{ij}^2\E(Y_j^2) \right)
+\\
+&\quad - \left(\sum_{a = 1}^K {K \choose a} \E\left(\epsilon_i^a \right) \beta_{ij}^{K - a}\E\left(Y_j^{K - a}\right)\right)
+\left(\beta_{ij}\E\left(Y_j^2\right) \right)
+\\
+&\quad + \beta_{ij}^{K-1}\E(Y_j^{K})\E(\epsilon_i^2) - \beta_{ij}\E(Y_j^2)\E(\epsilon_i^K)
+\end{aligned}
+\end{equation}
+
+Since this quantity is a polynomial in the moments and the edge weights, we can show that this quantity is generically (wrt to the moments and the edge-weights) non-zero if we can show it is not identically zero. As shown earlier, this quantity is zero if the moments of $Y_j$ and $\epsilon_i$ are consistent with the moments of a Gaussian. Thus, suppose all moments of degree less than $K$ are consistent with a Gaussian, and let  \[\E(\epsilon_i^K) = K!!\sigma_{\epsilon_i}^K + \eta_1\]
+\[\E(Y_j^K) = K!!\sigma_{Y_j}^K + \eta_2\]
+with
+\[\eta_1 = \eta_2\frac{\beta^{K-2}\sigma_{\epsilon_i}^2}{\sigma_{Y_j}^2} + 1\]
+so that
+\begin{equation}
+\tau_{j\rightarrow i.C} = \beta_{ij}^{K-1}\eta_2\E(\epsilon_i^2) - \beta_{ij}\E(Y_j^2)\eta_1 = 1
+\end{equation}
+
+
+\end{proof}
+
+
+\section{Algorithm}
+
+Consider the following algorithm for discovering the topological ordering. The method iteratively tests whether a node has a parent node in the remaining unordered nodes. If a node does not have any parents in the remaining unordered nodes, it is assumed to be the root in the remaining sub-graph and added to the discovered ordering.
+
+\begin{algorithm}[htbp!]
+\caption{\label{alg:topOrder}Naive Topological Ordering}
+\begin{algorithmic}
+\State $\Omega = \emptyset$; $\Psi = V$; $z = 1$
+\State Set $\hat \tau_{i}^{(0)}$ to some suitably large constant
+\While{$|\Psi| > 1$}
+	\State $\mathcal{C} = \{C \subseteq \Omega: \Omega(z-1) \in C \text{ and } |C| = \min(J, |\Omega|)$
+
+	\For{$i \in \Psi$}
+	\State Compute $\hat \tau_{i}^{(z)} = \min\left(\tau_{i}^{(z-1)}, \min_{C \in \mathcal{C}} \max_{j \in \Psi \setminus i} \tau_{i\rightarrow j.C}\right)$ 
+	\EndFor	 
+	\State $r = \arg\min_{i \in \Psi} \hat \tau_{i}$
+	\State $\Omega(z) = r$
+	\State $\Psi = \Psi \setminus r$
+	\State $z = z + 1$
+\EndWhile
+\State Return $\Omega$ as topological ordering of $V$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{theorem}
+For DAG, $\mathcal{G} = \{V,E\}$, assume
+\begin{enumerate}
+\item The maximum in-degree is $J$
+\item $|m_{V(\alpha)}| < M_1 - 1 \quad \forall |\alpha| < J$ (the raw moments of $Y$ are bounded)
+\item $\Sigma = \E(Y^T Y)$ has minimum eigenvalue $\lambda_{min}$ (min eigenvalue is needed for matrix inversion in estimation of regression coefficients)
+\item $|\hat m_{V(\alpha)} - m_{V(\alpha)}| < \delta < \lambda_{min}/J$ for all $|\alpha| < J$ and $\delta < 1$ (estimated raw moments are close to true raw moments)
+\item If $j \in \pa(i)$, then $\tau_{j\rightarrow i.C} > \gamma > 0$ 
+\end{enumerate}
+
+Then the output of Algorithm \ref{alg:topOrder} will be a correct topological ordering of $V$. 
+\end{theorem}
+
+Algorithmic speedups
+\begin{itemize}
+\item Prune nodes which are ancestors but not parents
+\item For fixed $i$ Test $\tau_{i \rightarrow j}$ in order from largest to smallest to see if you can decrease the max statistic
+\item Allow for multi-roots. Once $tau_{i\rightarrow j}$ is below an adaptive cut-off (rising max stat of selected root), then don't re-test
+\end{itemize}
+
+\section{Regression coefficients}
+
+\begin{lemma}
+Assume
+
+\begin{enumerate}
+\item $|m_{V(\alpha)}| < M_1 - 1 \quad \forall |\alpha| < K$
+\item  $\Sigma = \E(Y^T Y)$ has minimum eigenvalue $\lambda_{min}$
+\item $||\hat \Sigma  - \Sigma ||_\infty < \delta_1 < \lambda_{min}/(2J)$
+\end{enumerate}
+
+Then
+
+\[|| \hat \beta_{iC.C} - \beta_{iC.C} ||_\infty < \frac{2J \delta_1 \left( \lambda_{min} + J M_1\right)}{\lambda_{min}} = \delta_2\]
+for any $C \subseteq V$ such that $|C| < J$ and 
+\end{lemma}
+
+\begin{proof}
+
+Via Theorem 4.3.15 (Horn and Johnson) for any $C \subseteq V$ with $|C| \leq J$, $\lambda(\Sigma_{CC})_{min} \geq \lambda_{min}$, so that 
+
+\[\delta_1 \leq \lambda_{min}/J \leq  \lambda_{min}/|C| \leq \lambda(\Sigma_{CC})_{min}/|C|\]
+
+Let $\omega_{ij} = (\Sigma_{CC})^{-1}_{ij}$. Via Harris and Drton (Lemma 5) for any $C \subseteq V$, we have
+
+\begin{equation}
+\max_{ij}|\hat \omega_{ij} - \omega_{ij}| \leq \frac{|C|\delta_1 / \lambda(\Sigma_{CC})^2_{min}}{1 - |C|\delta_1 / \lambda(\Sigma_{CC})_{min} }
+\end{equation}
+
+Further note that $\eta_c = (C \delta/ \lambda^2) / (1 - |C| \delta / \lambda)$ is decreasing in $\lambda$ for $\lambda > J \delta_1$ and increasing in $|C| \leq J$ since
+
+\begin{equation}
+\frac{\partial \eta_c}{\partial \lambda} = \frac{1}{\lambda^2} - \frac{1}{(\lambda - |C| \delta_1)^2} < 0 
+\end{equation}
+\begin{equation}
+\frac{\partial \eta_c}{\partial |C|} = \frac{\delta_1}{(|C|\delta_1-\lambda)^2} > 0 
+\end{equation}
+
+Which yields the global bound for any $C$ such that $|C| \leq J$
+
+\begin{equation}
+\max_{ij}|\hat \omega_{ij} - \omega_{ij}| \leq \frac{J\delta_1 / \lambda^2_{min}}{1 - J\delta_1 / \lambda_{min} } = \eta
+\end{equation}
+
+
+Furthermore, $||(\Sigma_{CC})^{-1}||_\infty \leq \frac{1}{\lambda(\Sigma_{CC})_{min}} \leq \frac{1}{\lambda_{min}}$. 
+
+Then for $C \subseteq V$ and $i \in V\setminus C$
+
+\begin{equation}
+\begin{aligned}
+|| \hat \beta_{iC.C} - \beta_{iC.C} ||_\infty &= \max_{c \in C} |\hat \beta_{ic.C} - \beta_{ic.C}|\\
+& = \max_{c \in C} |\sum_{s \in C}(\hat \Sigma_{C,C})^{-1}_{cs}\hat m_{\{i,s\}(1,1)} - \sum_{s\in C}(\Sigma_{CC})^{-1}_{cs}m_{\{i,s(1,1)\}}|
+\\
+& = \max_{c \in C} |\sum_{s \in C}(\hat\omega_{cs}\hat m_{\{i,s\}(1,1)} - \sum_{s\in C}( \omega_{cs}m_{\{i,s(1,1)\}})|
+\\
+& = \max_{c \in C} |\sum_{s \in C}((\omega_{cs} + \eta_{cs})( m_{\{i,s\}(1,1)} + \xi_{is}) - \sum_{s\in C}(\omega_{cs}m_{\{i,s(1,1)\}})|
+\\
+& = \max_{c \in C} |\sum_{s \in C}(\eta_{cs}m_{\{i,s\}(1,1)} +\omega_{cs}\xi_{is} + \xi_{is}\eta_{cs})|
+\\
+& \leq |C| \eta M_1 +|C| \frac{1}{\lambda_{min}}\delta_1 + |C|\delta_1 \eta
+\\
+& = |C| \eta (M_1  +  \delta_1) +|C| \frac{1}{\lambda_{min}}\delta_1
+\\
+& \leq J \frac{J\delta_1}{\lambda_{min}(\lambda_{min} - J\delta_1)} (M_1 + \delta_1) + \frac{J \delta_1}{\lambda_{min}} \\
+& = \left(\frac{J \delta_1}{\lambda_{min}} \right)\left(1 + \frac{J(M_1 + \delta_1)}{\lambda_{min} - J\delta_1}\right)\\
+& = \left(\frac{J \delta_1}{\lambda_{min}} \right)\left( \frac{\lambda_{min} + J M_1}{\lambda_{min} - J\delta_1}\right)
+\end{aligned}
+\end{equation} 
+Since $2J\delta_1 < \lambda_{min}$ by assumption,
+
+\[\lambda_{min} - J\delta_1 > \frac{\lambda_{min}}{2}\]
+so that 
+\begin{equation}
+\left(\frac{J \delta_1}{\lambda_{min} - J\delta_1} \right)\left( \frac{\lambda_{min} + J M_1}{\lambda_{min}}\right) < \frac{2J \delta_1 \left( \lambda_{min} + J M_1\right)}{\lambda_{min}} = \delta_2 
+\end{equation}
+\end{proof}
+
+\section{First and fourth terms of $\tau$}
+
+\begin{lemma}
+Assume
+\begin{enumerate}
+\item $|m_{V(\alpha)}| < M_1 - \delta_1 $ for all $|\alpha| < K$
+\item  $|\beta_{ic.C}| < M_2 - \delta_1 $
+\item $|\hat m_{V(\alpha)} - m_{V(\alpha)}| < \delta_1 < 1$
+\item$|\hat \beta_{ic.C} - \beta_{ic.C}| < \delta_2 < 1 \quad \forall c \in C$
+\end{enumerate} 
+
+Then
+\[|\hat m_{\{i,j\}(s,1).C} - m_{\{i,j\}(s,1).C}|  < (J+s)^{s + .5}s!M_1M_2^s \sqrt{(J+s)^s\delta_1^2 + J \delta_2^2}\]
+\end{lemma}
+
+\begin{proof} 
+
+Let $f_{\{i,j\}(s,1).C} $ be the map from the raw cross-moments of $Y$ and $\beta_{iC.C}$ to $m_{\{i,j\}(s,1).C}$. Thus,
+
+\begin{equation}
+\begin{aligned}
+f_{\{i,j\}(s,1).C}\left(m_{V(a)}, \beta_{iC.C}, \beta_{jC.C}\right) &= \E\left[(Y_i - \beta_{iC}Y_C)^s (Y_j)\right]
+\\
+ &= \E\left[\left(\sum_{|a| = s} {s \choose a} \prod_{c \in C}(-\beta_{ic.C}^{a_c}Y_c)^{a_c} Y_i^{\alpha_{C+1}}\right)(Y_j )\right]
+\\
+& = \sum_{|\alpha| = s} {s \choose \alpha} m_{\{C,i,j\}(\alpha, 1)} \prod_{c \in C}(-\beta_{ic.C})^{\alpha_c}
+\end{aligned}
+\end{equation}
+
+This is a polynomial, so we derive a Lipschitz constant over that will hold over the bounded domain. 
+
+For each of the moments $m_{\{\cdot \}}$
+
+\begin{equation}
+\begin{aligned}
+\left|\frac{\partial f_1}{\partial m_{\{\cdot\}} } \right| \leq s! M_2^{s}
+\end{aligned}
+\end{equation}
+
+and for any of the regression coefficients $\beta_{iz.C}$
+
+\begin{equation}
+\begin{aligned}
+\left|\frac{\partial f_1}{\partial \beta_{iz.C}} \right|  &= \left| \sum_{\substack{|\alpha| = s \\\alpha_z > 0}} {s \choose \alpha} m_{\{C,i,j\}(\alpha, 1)} (-\alpha_z)(-\beta_{iz.C})^{\alpha_z - 1} \prod_{c \in C\setminus z}(-\beta_{ic.C})^{\alpha_c} \right|
+\\
+& \leq \sum_{\substack{|\alpha| = s \\\alpha_z > 0}} \left| {s \choose \alpha} m_{\{C,i,j\}(\alpha, 1)} (-\alpha_z)(-\beta_{iz.C})^{\alpha_z - 1} \prod_{c \in C\setminus z}(-\beta_{ic.C})^{\alpha_c} \right|
+\\
+& \leq \sum_{\substack{|\alpha| = s \\\alpha_z > 0}} {s \choose \alpha} M_1 s M_2^{s - 1}
+\\
+& \leq \sum_{\substack{|\alpha| = s \\ \alpha_z > 0}} {s \choose \alpha} \left[M_1 s M_2^{s - 1}\right] 
+\\
+& \leq (C+1)^s \left[M_1 s M_2^{s - 1} \right]
+\end{aligned}
+\end{equation}
+
+So that over the domain $(-M_1, M_1)^{{C + s \choose C}} \times (-M_2, M_2)^{C}$, the function is Lipschitz continuous with constant
+
+\begin{equation}
+\begin{aligned}
+& \sqrt{{C + s \choose C}\left(s!M_2^{s}\right)^2 + C\left((C+1)^s \left[M_1 s M_2^{s - 1}\right]\right)^2}
+\\
+&\leq \sqrt{(C+s)^{2s+1}\left(s!M_1 M_2^s\right)^2}
+\\
+&= (C+s)^{s + .5}s!M_1M_2^s
+\end{aligned}
+\end{equation}
+
+So that
+
+\begin{equation}
+\begin{aligned}
+|\hat m_{\{i,j\}(s,1).C} - m_{\{i,j\}(s,1).C}|  &\leq (C+s)^{s + .5}s!M_1M_2^{s-1} \sqrt{{C + s \choose C}\delta_1^2 + C\delta_2^2}\\
+&\leq (C+s)^{s + .5}s!M_1M_2^s \sqrt{(C+s)^s\delta_1^2 + C\delta_2^2}
+\\
+&\leq (J+s)^{s + .5}s!M_1M_2^s \sqrt{(J+s)^s\delta_1^2 + J \delta_2^2} = \delta_3
+\end{aligned}
+\end{equation}
+
+For $\tau$, we need $s = 1, K-1$, so the error in both cases is bounded by
+\[(J+(K-1))^{K-1 + .5}(K-1)!M_1 M_2^{(K-1)} \sqrt{(J+(K-1))^{(K-1)}\delta_1^2 + J \delta_2^2}\]
+\end{proof}
+\section{Second and third term}
+\begin{lemma}
+Assume
+\begin{enumerate}
+\item $|m_{V(\alpha)}| < M_1 - \delta_1 $ for all $|\alpha| < K$
+\item  $|\beta_{ic.C}| < M_2 - \delta_1 $
+\item $|\hat m_{V(\alpha)} - m_{V(\alpha)}| < \delta_1 $
+\item$|\hat \beta_{ic.C} - \beta_{ic.C}| < \delta_2 \quad \forall c \in C$
+\end{enumerate} 
+
+Then
+\[|\hat m_{\{i\}(s).C} - m_{\{i\}(s).C}|  < bound\]
+\end{lemma}
+\begin{proof}
+
+Similarly, for
+\begin{equation}
+\begin{aligned}
+f_{\{i\}(s).C} &= \E\left((Y_i - \beta_{iC}Y_C)^s\right) 
+\\
+&= \E\left(\sum_{|\alpha| = s} {s \choose \alpha} \prod_{c \in C}(-\beta_{ic.C}^{\alpha_c}Y_c)^{\alpha_c} Y_i^{\alpha_{C+1}}\right)\\
+&= \sum_{|\alpha| = s} {s \choose \alpha} m_{\{C,i\}(\alpha)} \prod_{c \in C}(-\beta_{ic.C})^{\alpha_c}\\
+\end{aligned}
+\end{equation}
+
+
+\[\left|\frac{\partial f_{i(s).C}}{\partial m_{\{C,i\}(\alpha)}} \right| < s! M_2^{s}\] 
+and
+\[\left|\frac{\partial f_{i(s).C}}{\beta_{ic.C}} \right| < s(C+1)^s M_1 M_2^{s-1} \] 
+
+So that over the domain $(-M_1, M_1)^{{C + s \choose C}} \times (-M_2, M_2)^{C}$, the function is Lipschitz continuous with constant
+
+\begin{equation}
+\begin{aligned}
+\sqrt{{C + s \choose C} \left(s! M_2^s\right)^2 + C\left(s(C+1)^s M_1 M_2^{s-1}\right)^2} &< \sqrt{(C+s)^s\left(s!M_2^s\right)^2 + C\left(s(C+1)^s M_1 M_2^{s-1}\right)^2} 
+\\
+& \leq \sqrt{(C+s)^{2s+1}s!^2M_1^2M_2^{2s}}\\
+& = (C+s)^{s + .5}s!M_1M_2^s
+\end{aligned}
+\end{equation}
+
+So that 
+\begin{equation}
+\begin{aligned}
+|\hat m_{\{i\}(s).C} - m_{\{i\}(s).C}| &\leq (C+s)^{s + .5}s!M_1M_2^s \sqrt{{C + s \choose C}\delta_1^2 + C\delta_2^2}
+\\
+& \leq (C+s)^{s + .5}s!M_1M_2^s \sqrt{(C+s)^s\delta_1^2 + C \delta_2^2}\\
+& \leq (J+s)^{s + .5}s!M_1M_2^s \sqrt{(J + s)^s\delta_1^2 + J \delta_2^2}\\
+\end{aligned}
+\end{equation}
+For $\tau$ we need $s = 2, K$ so the error in both cases is bounded by
+\[(J +K)^{K + .5}K!M_1M_2^K \sqrt{(J+K)^K\delta_1^2 + J \delta_2^2} = \delta_3\]
+
+\end{proof}
+Note that this value is strictly larger than the bound on the first and fourth terms, so $\delta_3$ is a global bound on all 4 terms required for $\tau$
+\section{Pairwise decision}
+\begin{lemma}
+\begin{enumerate}
+\item $|m_{V(\alpha)}| < M_1 $ for all $|\alpha| < K$
+\item For $i,j \in V$ and $C \subseteq V\setminus\{i,j\}$, $|\hat m_{\{i,j\}(s,r).C} - m_{\{i,j\}(s,r).C}| < \delta_3$ for $(s = K, r = 0)$, $(s = 2, r = 0)$ , $(s = 1, r = 1)$ and $(s = K-1, r = 1)$
+\end{enumerate} 
+
+Then
+\[|\hat \tau_{i \rightarrow j.C} -  \tau_{i \rightarrow j.C} | < 4M_1\delta_3 + 2\delta_3^2\]
+\end{lemma}
+
+\begin{proof}
+\begin{equation}
+\begin{aligned}
+|\hat \tau_{i \rightarrow j} -  \tau_{i \rightarrow j} |& = |\hat m_{\{i,j\}(K-1,1).C} \hat m_{i(2).C} - \hat m_{i(K)} \hat m_{\{i,j\}(1,1)}
+- (m_{\{i,j\}(K-1,1).C} m_{i(2).C} - m_{i(K)} m_{\{i,j\}(1,1)})|\\
+& \leq |\hat m_{\{i,j\}(K-1,1).C} \hat m_{i(2).C} - m_{\{i,j\}(K-1,1).C} m_{i(2).C}| + | \hat m_{i(K)} \hat m_{\{i,j\}(1,1)}
+-  m_{i(K)} m_{\{i,j\}(1,1)})|
+\\
+\end{aligned}
+\end{equation}
+
+Consider each of the two terms separately. For some $|\eta_1| < \delta_3$
+and $|\eta_2| < \delta_3$
+\begin{equation}
+\begin{aligned}
+|\hat m_{\{i,j\}(K-1,1).C} \hat m_{i(2).C} - m_{\{i,j\}(K-1,1).C} m_{i(2).C}| &= |(m_{\{i,j\}(K-1,1).C} + \eta_1) (m_{i(2).C} + \eta_2) - m_{\{i,j\}(K-1,1).C} m_{i(2).C}|
+\\
+&= |(m_{\{i,j\}(K-1,1).C}\eta_2 + m_{i(2).C}\eta_1) + \eta_1\eta_2|
+\\
+&\leq M_1 \eta_2 + M_1 \eta_1 + \eta_1 \eta_2 
+\\
+& = 2M_1 \delta_3 + \delta_3^2 
+\end{aligned}
+\end{equation}
+
+Using the analogous argument for the second term, we can bound the entire term such that
+\[|\hat \tau_{i \rightarrow j} -  \tau_{i \rightarrow j} | < 4M_1\delta_3 + 2\delta_3^2 \]
+\end{proof}
+
+
+
+
+\section{Algorithm Correctness}
+
+\begin{theorem}
+For DAG, $\mathcal{G} = \{V,E\}$, assume
+\begin{enumerate}
+\item The maximum in-degree is $J$
+\item $|m_{V(\alpha)}| < M_1 - \delta_1 \quad \forall |\alpha| < J$ (the raw moments of $Y$ are bounded)
+\item $\Sigma = \E(Y^T Y)$ has minimum eigenvalue $\lambda_{min}$ (min eigenvalue is needed for matrix inversion in estimation of regression coefficients)
+\item $|\hat m_{V(\alpha)} - m_{V(\alpha)}| < \delta_1 < \lambda_{min}/J$ for all $|\alpha| < K$ (estimated raw moments are close to true raw moments)
+\item If $j \in \pa(i)$, then $\tau_{j\rightarrow i.C} > \gamma   \geq 2 \left(4M_1\delta_3 + 2\delta_3^2\right) > 0$ for all $C \subseteq V$ with $|C| < J$
+\end{enumerate}
+
+Then the output of Algorithm \ref{alg:topOrder} will be a correct topological ordering of $V$. 
+\end{theorem}
+
+\begin{proof}
+Since 
+\begin{equation}
+j \in pa(i) \Rightarrow \tau_{i\rightarrow j.C} > \gamma 
+\end{equation}
+For any step $z$, we will correctly identify any root node (relative to the nodes in $\Psi$) since every non-root node (relative to $\Psi$) $i$ will have a parent $j \in \Psi$ so that $\tau_i = \max_j \min_C \tau_{i\rightarrow j.C} > \gamma$, but for any root node $r$, there will exist $C = \pa(r)$ such that $\hat \tau_i = \max_j \tau_{r\rightarrow j.C} < \gamma$. If there are multiple roots then we can pick one at random and proceed.
+\end{proof}
+
+\section{High Dimensional Consistency}
+There are ${V \choose K}$ moments $m_{V(\alpha)}$ such $|\alpha| = K$, thus via union bound, the probability that all moments will be within $\delta_1$ of the expectation is bounded by
+\[ V^K \max_{|\alpha| = K}P\left(|m_{V(\alpha)} - m_{V(\alpha)}| > \delta_1(\gamma, M_1, \lambda_{min}, C)\right) \]
+
+Note that $M_2 = \frac{J M_1}{\lambda_{min}}$, since
+
+\begin{equation}
+\begin{aligned}
+\beta_{ij.C} &= \left[(\Sigma_{CC})^{-1} \E(Y_C^T Y_i)\right]_j
+& = \sum_{c \in C} \omega_{jc}m_{\{c,i\}(1,1)}
+& \leq C\frac{1}{\lambda_{min}}M_1
+& \leq \frac{J M_1}{\lambda_{min}}
+\end{aligned}
+\end{equation}
+
+Note that
+
+\begin{equation}
+\begin{aligned}
+\delta_3 & = (J +K)^{K + .5}K!M_1M_2^K \sqrt{(J+K)^K\delta_1^2 + J \delta_2^2}\\
+&= (J +K)^{K + .5}K!M_1\left(\frac{J M_1}{\lambda_{min}}\right)^K \sqrt{(J+K)^K\delta_1^2 + J \left(\frac{2J \delta_1 \left( \lambda_{min} + J M_1\right)}{\lambda_{min}} \right)^2}
+\\
+&= (J +K)^{K + .5}K!M_1\left(\frac{J M_1}{\lambda_{min}}\right)^K \sqrt{\delta_1^2 \left((J+K)^K + J \left(\frac{2J\left( \lambda_{min} + J M_1\right)}{\lambda_{min}} \right)^2\right)}
+\\
+&= (J +K)^{K + .5}K!M_1\left(\frac{J M_1}{\lambda_{min}}\right)^K \delta_1\sqrt{ (J+K)^K + J \left(\frac{2J\left( \lambda_{min} + J M_1\right)}{\lambda_{min}} \right)^2}
+\end{aligned}
+\end{equation}
+
+So for fixed $\gamma$, 
+
+\[\gamma \geq 2 \left(4M_1\delta_3 + 2\delta_3^2\right)\]
+implies that
+\begin{equation}
+\delta_1 \leq -M_1\xi + \frac{\sqrt{4 M_1^2\xi^2 + \gamma}}{2}
+\end{equation}
+where 
+\[\xi = (J +K)^{K + .5}K!M_1\left(\frac{J M_1}{\lambda_{min}}\right)^K \sqrt{ (J+K)^K + J \left(\frac{2J\left( \lambda_{min} + J M_1\right)}{\lambda_{min}} \right)^2}\]
+
+Via Lemma B.3 (Lin et al 2016)
+\begin{lemma}
+Consider a degree z polynomial $f(X) = f(X_1, \ldots, X_m)$ where $X_1, \ldots, X_m$ are rv with log-concave joint distributions on $\mathbb{R}^m$. Let $L > 0 $ be the constant from B.2. Then, for all $\delta$ such that 
+\[K:= \frac{2}{L} \left(\frac{\delta}{e\sqrt{\text{Var}\left[f(X)\right]}}\right)^{1/z} \geq 2\]
+
+we have,
+\[P(|f(X) - \mathbb{E}\left[f(X)\right] | > \delta ) \leq \exp\left(\frac{-2}{L} \left(\frac{\delta}{e\sqrt{\text{Var}\left[f(X)\right]}}\right)^{1/z}\right)\]
+\end{lemma}
+
+\section{High Dimensional Consistency}
+For fixed $M_1$, $\gamma$, $K$ and $J$, we have
+
+\begin{equation}
+P(\hat \Omega \neq \Omega) \leq V^K \exp\left(\frac{-2}{L} \left(\frac{\sqrt{n}\delta}{e\sqrt{M_1}}\right)^{1/K}\right)
+\end{equation}
+
+So the estimate of the topological ordering will be consistent as long as
+\begin{equation}
+K \log(V) - \frac{-2n^{1/(2K)}}{L} \left(\frac{\delta}{e\sqrt{M_1}}\right)^{1/K} \rightarrow -\infty
+\end{equation}
+
+
+\section{Algorithm refinements}
+
+
+There are a few ideas for modifying the algorithm that may make the estimation more robust or run faster-
+
+
+\begin{itemize}
+\item Use sum rather than max: We could choose the next root node via summing over $j \neq i$ rather than simply taking the max. That is 
+\[\text{root} = \arg\min_i \min_C \sum_j  |\tau_{i\rightarrow j.C}|\] rather than 
+\[\text{root} = \arg \min_i \min_C \max_j |\tau_{i\rightarrow j}|\] 
+This doesn't quite fit the theory we've written up because then the ``non-Gaussian-ness" assumption about $\gamma$ now depends on the number of variables we sum over. However, in practice this seems to improve estimation significantly. 
+\item Pruning ancestors: In general, we can use any sort variable selection technique to remove ancestors which aren't parents. However, using something else may require making additional assumptions. If we want to stay with the assumptions we currently have, for $k \in \an(i) \setminus \pa(i)$, then there will eventually be a $C \in \Omega$ such that $C$ blocks all paths from $k$ to $i$ and so $\mathbb{E}(\tau_{k \rightarrow i.C}) = 0$. Worst case scenario, the only $C$ that satisfies this is $\pa(i)$ so we may not be able to eliminate any ancestor nodes early, but in practice, we can use this to prune out ancestors which are not parents by only consider nodes $k$ such that $\min_C \tau_{k \rightarrow j.C} > \zeta$. We can set $\zeta$ before hand to be some small constant, or we can adaptively choose $\zeta$ to be driven from the of the statistics from the nodes selected so far. 
+\[\arg\min_i \min_C \sum_j  |\tau_{i\rightarrow j.C}|\]
+\item Ordering of min-max (or min-sum): For $C = \pa(i)$, $ \tau_{i\rightarrow j.C} = 0$ for all $j \not\in C$. However, for a general set $C$, $\tau_{i \rightarrow j.C}$ could be 0 for some $j$ when $C \not \subseteq \pa(i)$. Thus, we could also pick a root via $\arg \max_j \min_C \tau_{i\rightarrow j.C}$. Since there should be some dependency across $\tau_{i\rightarrow j.C}$ for fixed C, simulations show that the min-max statistic seems to identify the causal ordering better. However, using the max-min can lead to a considerable speed up. For instance, for each $i$, if we store $\hat \tau_{i \rightarrow j}^{(t-1)} = \min_C \tau_{i \rightarrow j.C}$ for each $j$, When we remove node $r$ from the set of unordered nodes and place it into $\Omega$, we can update 
+\[\hat \tau_{i \rightarrow j} = \min\left(\hat \tau_{i \rightarrow j}^{(t-1)}, \min_{C: r \in C} \tau_{i \rightarrow j.C}\right)\] where we do not have to recalculate everything and only consider the new sets $C$ which contain the latest identified root $r$. If we use the min-max statistic, we then have to recalculate everything, unless we have stored each individual $\tau_{i\rightarrow j.C}$ for each $j$ and $C$. This is not such a big speed-up when you prune ancestors aggressively, but if you don't prune ancestors, this can help a lot by reducing the effective size of the max in-degree by 1. 
+\end{itemize}
+
+In terms of speed, right now, using 6 cores on my desktop and using a ``moderate" amount of pruning, we can topologically order a 100 node graph with max in-degree of 3 in roughly 340 seconds 
+
+\end{document}

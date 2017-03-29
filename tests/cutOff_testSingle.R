@@ -5,8 +5,8 @@
 ######################################################
 
 library(doParallel)
-source("rDAG.R")
-source("findGraphMulti.R")
+source("functions/rDAG.R")
+source("functions/findGraphMulti.R")
 
 
 
@@ -25,24 +25,28 @@ for(i in 1:sim.size){
     cat("\n")
     out_dag <- rDAG_degree(p = p, n = n, maxInDeg = 3, dist = "unif")
     
-    time1 <- system.time(output1 <- findGraphMulti(out_dag$Y, subsets = F,
+    time1 <- system.time(output1 <- findGraphSingle(out_dag$Y, subsets = F,
                                                    maxInDegree = 3, fun = max,
                                                    degree = 4, cutOffScaling = .3, verbose =F))
     
-    time2 <- system.time(output2 <- findGraphMulti(out_dag$Y, subsets = F,
+    time2 <- system.time(output2 <- findGraphSingle(out_dag$Y, subsets = F,
                                                    maxInDegree = 3, fun = max,
                                                    degree = 4, cutOffScaling = .5, verbose =F))
     
-    time3 <- system.time(output3 <- findGraphMulti(out_dag$Y, subsets = F,
+    time3 <- system.time(output3 <- findGraphSingle(out_dag$Y, subsets = F,
                                                    maxInDegree = 3, fun = max,
                                                    degree = 4, cutOffScaling = .8, verbose =F))
     
-    time4 <- system.time(output4 <- findGraphMulti(out_dag$Y, subsets = F,
+    time4 <- system.time(output4 <- findGraphSingle(out_dag$Y, subsets = F,
                                                    maxInDegree = 3, fun = max,
                                                    degree = 4, cutOffScaling = 1, verbose =F))
+    
+    time4 <- system.time(output4 <- findGraphSingle(out_dag$Y, subsets = F,
+                                                    maxInDegree = 3, fun = max,
+                                                    degree = 4, cutOffScaling = 1.5, verbose =F))
   
     
-    time5 <- system.time(output5 <- findGraphMulti(out_dag$Y, subsets = F,
+    time5 <- system.time(output5 <- findGraphSingle(out_dag$Y, subsets = F,
                                                    maxInDegree = 3, fun = max,
                                                    degree = 4, B = out_dag$B, verbose = F))
     
@@ -55,18 +59,17 @@ for(i in 1:sim.size){
     timing.rec[i, ] <- c(time1[3], time2[3], time3[3], time4[3], time5[3])
 
     ### update table
-    write.table(cor.rec, file = "cor_pruning.csv", sep = ",")
-    write.table(timing.rec, file = "timing_pruning.csv", sep = ",")
+    write.table(cor.rec, file = "tests/testOutput/cor_pruningSingle.csv", sep = ",")
+    write.table(timing.rec, file = "tests/testOutput/timing_pruningSingle.csv", sep = ",")
     
   }
 
 stopCluster(cl)
 
-cor.table <- read.table(file = "cor_pruning.csv", sep = ",")
-time.table <- read.table(file = "timing_pruning.csv", sep = ",")
-
-png("pruning.png", width =600, height = 350)
+png("pruningSingle.png", width =600, height = 350)
 par(mfrow = c(1, 2))
-boxplot(cor.table, names = c(as.character(c(.3, .5, .8, 1)), "oracle"), xlab = "Pruning Parameter", ylab = "Kendall Tau")
-boxplot(time.table, names = c(.3, .5, .8, 1, "oracle"), xlab = "Pruning Parameter", ylab = "Seconds")
+boxplot(cor.table, names = c(as.character(c(.3, .5, .8, 1.5)), "oracle"), xlab = "Pruning Parameter", ylab = "Kendall Tau")
+mtext("Min-Max")
+boxplot(time.table, names = c(.3, .5, .8, 1.5, "oracle"), xlab = "Pruning Parameter", ylab = "Seconds")
+mtext("Min-Max")
 dev.off()
