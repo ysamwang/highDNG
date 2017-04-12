@@ -104,12 +104,18 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, fu
       
       ### Start testing subsets of an appropriate size
       while(size.of.set <= largest.set.size){
-          
-          ### Ensure that each conditioning sub-set includes the last node
-          ### So that we are not re-testing conditioning sets
+        
+        
+        ### Ensure that each conditioning sub-set includes the last node
+        ### So that we are not re-testing conditioning sets
+        if(length(setdiff(conditionSet, lastRoot)) == 1){
+          conditionSubSet <- matrix(setdiff(conditionSet, lastRoot), nrow = 1, ncol = 1)
+        }  else {
           conditionSubSet <- t(combn(setdiff(conditionSet, lastRoot),
                                      size.of.set - 1))
-          conditionSubSet <- cbind(rep(lastRoot, dim(conditionSubSet)[1]), conditionSubSet)
+        }
+        
+        conditionSubSet <- cbind(rep(lastRoot, dim(conditionSubSet)[1]), conditionSubSet)
           
           
           ### calculate regression for each possible conditioning set

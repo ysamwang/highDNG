@@ -3,7 +3,7 @@
 # n - number of samples
 # maxInDeg - maximum number of samples
 # dist - distribution of errors
-rDAG_degree <- function(p, n, maxInDeg = 4, dist = "gamma", varyScale = F){
+rDAG_degreeExt <- function(p, n, maxInDeg = 4, dist = "gamma", varyScale = F){
   B <- matrix(0, nrow = p, ncol = p)
   for(i in 3:p){
     
@@ -24,7 +24,7 @@ rDAG_degree <- function(p, n, maxInDeg = 4, dist = "gamma", varyScale = F){
   if(dist == "gamma"){  
     if(varyScale) {
       errs <- matrix(rgamma(n * p, 1, 1) - 1, nrow = n, ncol = p)
-      scale.param <- runif(p, 1, 1.5)
+      scale.param <- runif(p, .8, 4)
       errs <- t(t(errs) * scale.param)
     } else {
       errs <- matrix(rgamma(n * p, 1, 1) - 1, nrow = n, ncol = p)
@@ -32,31 +32,14 @@ rDAG_degree <- function(p, n, maxInDeg = 4, dist = "gamma", varyScale = F){
     
   } else if (dist == "unif"){
     if(varyScale) {
-    errs <- matrix(runif(n * p, -sqrt(3), sqrt(3)), nrow = n, ncol = p)
-    scale.param <- runif(p, 1, 1.5)
-    errs <- t(t(errs) * scale.param)
+      errs <- matrix(runif(n * p, -sqrt(3), sqrt(3)), nrow = n, ncol = p)
+      scale.param <- runif(p, .8, 4)
+      errs <- t(t(errs) * scale.param)
     } else {
       errs <- matrix(runif(n * p, -sqrt(3), sqrt(3)), nrow = n, ncol = p)
     }
   } else if(dist == "gauss"){
     errs <- matrix(rnorm(n * p), nrow = n, ncol = p)
-  } else if (dist == "t"){
-    if(varyScale) {
-      errs <- matrix(rt(n * p, df = 7) / sqrt(7 / 5), nrow = n, ncol = p)
-      scale.param <- runif(p, 1, 1.5)
-      errs <- t(t(errs) * scale.param)
-    } else {
-      errs <- matrix(rt(n * p, df = 7) / sqrt(7 / 5), nrow = n, ncol = p)
-    }
-  }else if (dist == "dexp"){
-      if(varyScale) {
-        errs <- matrix(rmutil::rlaplace(n * p, s = 1 / sqrt(2)), nrow = n, ncol = p)
-        scale.param <- runif(p, 1, 1.5)
-        errs <- t(t(errs) * scale.param)
-      } else {
-        errs <- matrix(rmutil::rlaplace(n * p, s = 1 / sqrt(2)), nrow = n, ncol = p)
-      }
-    
   }
   Y <- solve(diag(rep(1,p)) - B, t(errs))
   return(list(B = B, Y = t(Y), errs = errs))

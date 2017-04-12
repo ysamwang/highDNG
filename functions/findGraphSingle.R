@@ -17,7 +17,7 @@
 #############################################################################################################
 
 findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, fun = max,
-                           subsets = F, B = NULL, cutOffScaling = .5, verbose = T) {
+                            B = NULL, cutOffScaling = .5, verbose = T) {
   
   # check to make sure the function used to aggregate is either sum or max
   if(!identical(fun, sum) && !identical(fun, max)){
@@ -50,22 +50,14 @@ findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, f
       
       ### If considering all subsets smaller than maxInDegree, then start at subset of 
       ### largest.set.size is the largest set we should consider
-      largest.set.size <- min(maxInDegree, length(conditionSet))
-      
-      if(subsets){  
-        size.of.set <- 1
-      } else {
-        # If we only test subsets of the max size, then go to that size immediately
-        size.of.set <- largest.set.size
-      }
-      
-      ### Start testing subsets of an appropriate size
-      while(size.of.set <= largest.set.size){
+      size.of.set <- min(maxInDegree, length(conditionSet))
         
-        ### Ensure that each conditioning sub-set includes the last node
-        ### So that we are not re-testing conditioning sets
-        conditionSubSet <- t(combn(conditionSet, size.of.set))
 
+        if(length(conditionSet) == 1){
+          conditionSubSet <- matrix(conditionSet, nrow = 1, ncol = 1)
+        } else {
+          conditionSubSet <- t(combn(conditionSet, size.of.set))
+        }
         
         ### calculate regression for each possible conditioning set
         for(z in 1:dim(conditionSubSet)[1]){
@@ -73,7 +65,6 @@ findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, f
           
           # Update the tau for all currently unordered nodes
           tau.C <- sapply(j, function(j){.calcTau(k = degree, pa = res, ch = Y[, j])})
-          pruneStat[j] <- pmin(pruneStat[j], tau.C)
           
           # update tauStat
           tauStat <- min(tauStat, fun( tau.C ))
@@ -86,12 +77,6 @@ findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, f
                                                                                                     ch = Y[, j])}))
         }
         
-        # increase the size of the set
-        size.of.set <- size.of.set + 1
-        
-        
-      } # end while 
-      
       
       
       # only return the test stat values which were ever touched
@@ -126,27 +111,27 @@ findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, f
       if(!is.null(B)){
         condSet <- intersect(which(B[i, ] != 0), ordered)
       } else {
-        condSet <- union(intersect(ordered, which(pruneStats[i, ] > cutOff)), ordered[length(ordered)])  
+        condSet <- union(intersect(ordered, which(pruneStats[i, ] > cutOff)), ordered[length(ordered)])
+        
       }
       ### Test to see if i has any parents left in unordered
       .getTauSingle(i, j = unordered, degree = degree, conditionSet = condSet,
                    maxInDegree = maxInDegree)
     }
     
-    ### Suspicious of this ###
-    output_pruneStats <- t(sapply(output, function(x){x$pruneStat}))
+    output_pruneStats <- round(t(sapply(output, function(x){x$pruneStat})),7)
     
-    output_tauStats <- sapply(output, function(x){x$tauStat})
-    # Update pruneStats
-    pruneStats[unordered, ] <- pmin(pruneStats[unordered, ], output_pruneStats)
+    output_tauStats <- round(sapply(output, function(x){x$tauStat}), 7)
     
-    
-
     root <- unordered[which.min(output_tauStats)]
+    pa <- union(intersect(ordered, which(pruneStats[root, ] > cutOff)), ordered[length(ordered)])
     
+    
+    pruneStats[unordered, ordered] <- pmin(pruneStats[unordered, ordered], output_pruneStats[, ordered])
+
     # Update cutoff if pruningCut is not set to a fixed value
     if(is.null(pruningCut)){
-      cutOff <- max(cutOff, max(pruneStats[root, ]) * cutOffScaling)
+      cutOff <- max(cutOff, min(output_tauStats) * cutOffScaling)
     }
     
     # Print
@@ -154,9 +139,7 @@ findGraphSingle <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, f
       cat("====")
       cat(length(ordered))
       cat("====\n")
-      cat("Roots: "); cat(root); cat("; Parents: ")
-      
-      cat(ordered[which(pruneStats[root, ordered] > cutOff)])
+      cat("Roots: "); cat(root); cat("; Parents: "); cat(pa)
       cat("\n")
       cat("\n")
       
