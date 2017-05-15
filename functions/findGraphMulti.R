@@ -17,14 +17,8 @@
 #############################################################################################################
 
 
-findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, fun = max,
+findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL,
                       subsets = F, B = NULL, cutOffScaling = .5, verbose = T) {
-  
-  
-  if(!identical(fun, sum) && !identical(fun, max)){
-    print("Unrecognized function")
-    stop()
-  }
   
   # Test Statistic
   .calcTau <- function(k, pa, ch) {
@@ -45,16 +39,6 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, fu
       pruneStat[j] <- sapply(j, function(j){.calcTau(degree, Y[, i], Y[, j])})
       return(pruneStat)
       
-    
-      
-      
-    } else if(!(lastRoot %in% conditionSet)){
-      ### There was a new root added, but we don't have any new sets to test
-      ### Note this includes the scenario where conditionSet is the empty set 
-      return(pruneStat)
-      
-      
-      
       
     } else {
       ### There was a new root added and it is in the conditionSet
@@ -69,80 +53,19 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL, fu
         
       ### If considering all subsets smaller than maxInDegree, then start at subset of 
       ### largest.set.size is the largest set we should consider
-      largest.set.size <- min(maxInDegree, length(conditionSet))
+      size.of.set <- min(maxInDegree, length(conditionSet))
       
-      ### Note that we first get all subsets of size - 1, since we'll add back in
-      ### lastRoot after forming all subsets
-      
-      if(subsets){  
-          
-          # Get residuals when only conditioning on lastRoot
-          res <- RcppArmadillo::fastLm(X = Y[, lastRoot], y = Y[, i])$residual
-          pruneStat[j] <- pmin(pruneStat[j], 
-                               sapply(j,function(j){.calcTau(k = degree, pa = res, ch = Y[, j])}
-                                      )
-                               )
-          
-          
-          # Update the tau for ancestors but possibly not parents      
-          conditionNodesToTest <- setdiff(conditionSet, lastRoot)
-          
-          pruneStat[conditionNodesToTest] <- pmin(pruneStat[conditionNodesToTest],
-                                                  sapply(conditionNodesToTest,
-                                                         function(j){.calcTau(k = degree, pa = res, ch = Y[, j])}
-                                                         )
-                                                  )
-          
-          
-          size.of.set <- 2
-          
-          
-      } else {
-          # If we only test subsets of the max size, then go to that size immediately
-          size.of.set <- largest.set.size
-      }
-      
-      ### Start testing subsets of an appropriate size
-      while(size.of.set <= largest.set.size){
-        
-        
-        ### Ensure that each conditioning sub-set includes the last node
-        ### So that we are not re-testing conditioning sets
-        if(length(setdiff(conditionSet, lastRoot)) == 1){
+      if(length(setdiff(conditionSet, lastRoot)) == 1){
           conditionSubSet <- matrix(setdiff(conditionSet, lastRoot), nrow = 1, ncol = 1)
-        }  else {
-          conditionSubSet <- t(combn(setdiff(conditionSet, lastRoot),
+      }  else {
+        conditionSubSet <- t(combn(setdiff(conditionSet, lastRoot),
                                      size.of.set - 1))
-        }
-        
-        conditionSubSet <- cbind(rep(lastRoot, dim(conditionSubSet)[1]), conditionSubSet)
-          
-          
-          ### calculate regression for each possible conditioning set
-          for(z in 1:dim(conditionSubSet)[1]){
-            res <- RcppArmadillo::fastLm(X = Y[, conditionSubSet[z, ]], y = Y[, i])$residual
-            
-            # Update the tau for all currently unordered nodes
-            pruneStat[j] <- pmin(pruneStat[j], 
-                                 sapply(j,function(j){.calcTau(k = degree, pa = res, ch = Y[, j])}))
-            
-            # Update the tau for ancestors but possibly not parents      
-            conditionNodesToTest <- setdiff(conditionSet, conditionSubSet[z, ])
-            
-            pruneStat[conditionNodesToTest] <- pmin(pruneStat[conditionNodesToTest],
-                                                    sapply(conditionNodesToTest, function(j){.calcTau(k = degree, pa = res,
-                                                                                                      ch = Y[, j])}))
-          }
-          
-          # increase the size of the set
-          size.of.set <- size.of.set + 1
-      
-          
-          } # end while 
-      
-      
-      
-        # only return the test stat values which were ever touched
+      }
+      # always include last root in the conditioning set  
+      conditionSubSet <- cbind(rep(lastRoot, dim(conditionSubSet)[1]), conditionSubSet)
+      pruneStat <- calcTauCHelper::calcTauMultiC(i - 1, j - 1, degree, 
+                                                 conditionSubSet - 1, anSets - 1, Y,  yty)
+      # only return the test stat values which were ever touched
         return(pruneStat)
       }
     }

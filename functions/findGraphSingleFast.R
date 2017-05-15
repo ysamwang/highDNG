@@ -63,12 +63,12 @@ findGraphSingleFast <- function(Y, maxInDegree = 3, degree = 3, fun = max,
           conditionSubSet <- t(combn(conditionSet, largest.set.size))
         }
           
-          anSets <- t(apply(conditionSubSet, MAR = 1, function(x){setdiff(conditionSet, x)}))
-          if(dim(anSets)[1] == 1 & dim(anSets)[2] > 0){
+        anSets <- t(apply(conditionSubSet, MAR = 1, function(x){setdiff(conditionSet, x)}))
+        if(dim(anSets)[1] == 1 & dim(anSets)[2] > 0){
             anSets <- t(anSets)
-          }
+        }
           
-          tau.C <- calcTauCHelper::calcTauC(i - 1, j - 1, degree,
+        tau.C <- calcTauCHelper::calcTauC(i - 1, j - 1, degree, 
                                             conditionSubSet - 1, anSets - 1, Y,  yty)
       
     }
