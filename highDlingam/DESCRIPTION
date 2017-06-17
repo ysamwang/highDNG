@@ -1,0 +1,13 @@
+Package: highDLingam
+Type: Package
+Title: calculate tau faster
+Version: 1.0
+Date: 2017-03-30
+Author: Sam
+Maintainer: Sam Wang
+     <ysamwang@uw.edu>
+Description: More about what it does (maybe
+     more than one line)
+License: What license is it under?
+Imports: Rcpp (>= 0.12.11)
+LinkingTo: Rcpp, RcppArmadillo

@@ -20,6 +20,8 @@
 findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL,
                       subsets = F, B = NULL, cutOffScaling = .5, verbose = T) {
   
+  yty <- t(Y) %*% Y  
+  
   # Test Statistic
   .calcTau <- function(k, pa, ch) {
     abs(mean(pa^(k - 1) * ch) * mean(pa^2) - mean(pa^k) * mean(pa * ch))
@@ -31,7 +33,7 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL,
     ####### Set up #######
     j <- setdiff(j,i)
     p <- dim(Y)[2]
-    pruneStat <- rep(1e5, p)
+    pruneStat <- rep(1e10, p)
     
     
     if(is.null(lastRoot)){ 
@@ -63,6 +65,15 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL,
       }
       # always include last root in the conditioning set  
       conditionSubSet <- cbind(rep(lastRoot, dim(conditionSubSet)[1]), conditionSubSet)
+      
+      anSets <- t(apply(conditionSubSet, MAR = 1, function(x){setdiff(conditionSet, x)}))
+      if(dim(anSets)[1] == 1 & dim(anSets)[2] > 0){
+        anSets <- t(anSets)
+      }
+      print(paste("Testing", i))
+      print(conditionSubSet)
+      print(anSets)
+      
       pruneStat <- calcTauCHelper::calcTauMultiC(i - 1, j - 1, degree, 
                                                  conditionSubSet - 1, anSets - 1, Y,  yty)
       # only return the test stat values which were ever touched
@@ -104,13 +115,12 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, pruningCut = NULL,
     }
     
     
+    print(output)
     # Update pruneStats
     pruneStats[unordered, ] <- pmin(pruneStats[unordered, ], output)
     
 
-    output_tauStats <- apply(pruneStats[unordered, unordered], MAR = 1,
-                        # uses either sum or max
-                        fun)
+    output_tauStats <- apply(pruneStats[unordered, unordered], MAR = 1, max)
     
     root <- unordered[which.min(output_tauStats)]
     

@@ -1,0 +1,3 @@
+useDynLib(highDLingam)
+importFrom(Rcpp, evalCpp)
+exportPattern("^[[:alpha:]]+")
