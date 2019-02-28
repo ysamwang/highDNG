@@ -1,0 +1,185 @@
+\documentclass{article}
+\usepackage[margin =1in]{geometry}
+\usepackage{placeins}
+\title{Additional Simulations for High Dimensional LiNGAM}
+\author{}
+\begin{document}
+\maketitle
+
+\section{Procedure}
+Specifically, for the pairwise LiNGAM + preselection procedure we do-
+
+\begin{enumerate}
+\item Use cv-lasso to select the neighborhood for each node. We make the skeleton by using "or-rule."
+\item Then following following Hyvarinen and Smith (2013), we use the pairwise statistic (without any additional conditioning) to assign a direction for each edge in the estimated skeleton.
+\item  We estimate each edge weight using OLS
+\item As suggested by Hyvarinen and Smith (2013), we use the ordering procedure from Alg B and Alg C of Shimizu et. al (2006) which uses a progressively larger threshold for the edgeweights until a total ordering can be achieved. If there are multiple possible roots, the existing code (by Jonas in the pcalg package) simply takes the first one (i.e., matches the ordering from the input matrix). So if we set all edgeweights to 0, with the existing code we would still get kendall's tau of 1. So I changed the code slightly to select a root at random if multiple roots are possible since in our setup there is always a single root that we would choose.
+\end{enumerate}
+
+For our procedure + preselection, we also do step (1). We then run the normal procedure but limit the set of possible parents for each node to the estimated neighborhood. 
+
+\FloatBarrier
+
+\section{Results}
+
+In the graph, the x-axis shows p, the number of nodes and $n$ the number of samples is always 3/4p. The dark boxplots are HDL (our high dimensional lingam procedure without any pre-selection), the light-gray boxplots are HDL+p (our high dimensional lingam + pre-selection), and the white boxplots are PW+P (the pairwise procedure from Hyvarinen and Smith + pre-selection). In general the ordering of performance is HDL+P, HDL, and PW+P. Although, our procedure knows the max-indegree so we'd expect it to do a bit better. From the graphs, it appears that everyone does better in the hub setting, but recall that we had to make the simulation settings slightly easier in the hub case so that consistency can be shown. Thus, the two settings are not directly comparable.
+
+
+<<echo = FALSE, fig.align='center', fig.width = 8, fig.height = 8>>=
+unifRec <- matrix(0, ncol = 2, nrow = 6 * 20)
+n.list <- c(100, 200, 500, 1000, 1500, 2000)
+unifRec[, 1] <- rep(n.list, each = 20)
+
+
+for(i in 1:4){
+  if(i <4){dat <- read.csv(paste("highD_unif_cor_", n.list[i], ".csv", sep = ""))[, 2]
+  unifRec[((i-1) * 20 + 1):(i * 20), 2]  <- dat}
+  dat10 <- read.csv(paste("highD_unif_cor_1000_", i, ".csv", sep = ""))[, 2]
+  unifRec[((i-1) * 5 + 61):(i * 5 + 60), 2]  <- dat10
+  dat15 <- read.csv(paste("highD_unif_cor_1500_", i, ".csv", sep = ""))[, 2]
+  unifRec[((i-1) * 5 + 81):(i * 5 + 80), 2]  <- dat15
+}
+
+for(i in 1:4){
+  dat2000 <- read.csv(paste("highD_unif_cor_2000_", i, ".csv", sep = ""))[, 2]
+  unifRec[((i-1)*5+ 101):(i * 5  + 100), 2]  <- dat2000
+}
+
+
+
+preselect.rec <- matrix(0, nrow = 100, ncol = 2)
+preselect.rec[, 1] <- rep(c(100, 200, 500, 1000, 1500), each = 20)
+
+preselect.rec[1:20, 2] <- read.csv("../matlab_Comps/sparsePWL/res/pwl_cor_100.csv")[, 2]
+preselect.rec[21:40, 2] <- read.csv("../matlab_Comps/sparsePWL/res/pwl_cor_200.csv")[, 2]
+preselect.rec[41:60, 2] <- read.csv("../matlab_Comps/sparsePWL/res/pwl_cor_500.csv")[, 2]
+
+for(i in 1:20){
+  preselect.rec[60+i, 2] <- read.csv(paste("../matlab_Comps/sparsePWL/res/pwl_cor_1000_",i, ".csv", sep = ""))[, 2]
+  preselect.rec[80+i, 2] <- read.csv(paste("../matlab_Comps/sparsePWL/res/pwl_cor_1500_",i, ".csv", sep = ""))[, 2]
+}
+
+preselect.me.rec <- matrix(0, nrow = 100, ncol = 2)
+preselect.me.rec[, 1] <- rep(c(100, 200, 500, 1000, 1500), each = 20)
+
+preselect.me.rec[1:20, 2] <- read.csv("../matlab_Comps/sparsePWL/res/preSelect_unif_cor_100.csv")[, 2]
+preselect.me.rec[21:40, 2] <- read.csv("../matlab_Comps/sparsePWL/res/preSelect_unif_cor_200.csv")[, 2]
+preselect.me.rec[41:60, 2] <- read.csv("../matlab_Comps/sparsePWL/res/preSelect_unif_cor_500.csv")[, 2]
+
+for(i in 1:20){
+  preselect.me.rec[60+i, 2] <- read.csv(paste("../matlab_Comps/sparsePWL/res/preSelect_unif_cor_1000_",i, ".csv", sep = ""))[, 2]
+  preselect.me.rec[80+i, 2] <- read.csv(paste("../matlab_Comps/sparsePWL/res/preSelect_unif_cor_1500_",i, ".csv", sep = ""))[, 2]
+}
+
+
+
+holder <- data.frame(matrix(0, ncol = 3, nrow = 100 * 3))
+holder[1:100, ] <- cbind(rep("PW+P", 100), preselect.rec)
+holder[101:200, ] <- cbind(rep("HDL+P", 100), preselect.me.rec)
+holder[201:300, ] <- cbind(rep("HDL", 100), unifRec[1:100,])
+holder[,1] <- factor(as.character(holder[,1]), levels = c("HDL", "HDL+P", "PW+P"))
+holder[,2] <- factor(as.character(holder[,2]), levels = c(100, 200, 500, 1000, 1500))
+
+par(mfrow = c(2,1))
+bp <- boxplot(as.numeric(holder[, 3])~holder[, 1] + holder[, 2], ylim = c(-.5, 1), col = c("gray50", "gray75", "white"), xaxt = "n",
+              at = rep(c(1:5) * 3 - 1, each = 3) + c(-.6, 0, .6), boxwex = .5, ylab = "Kendalls Tau", xlab = "p", main = "Random Graphs")
+axis(side = 1, at = c(1:5) * 3 - 1,labels = c(100, 200, 500, 1000, 1500), lwd.ticks = F)
+abline(v = c(1:4) * 3 + .55, lty = 3)
+abline(h = 0, col = "red")
+bp <- boxplot(as.numeric(holder[, 3])~holder[, 1] + holder[, 2], ylim = c(-.5, 1), col = c("gray50", "gray75", "white"), xaxt = "n",
+              at = rep(c(1:5) * 3 - 1, each = 3) + c(-.6, 0, .6), boxwex = .5, ylab = "Kendalls Tau", xlab = "p", add = T)
+legend(x = "bottom", legend = c("HDL", "HDL+P", "PW+P"), col = c("gray50", "gray75", "white"), fill = c("gray50", "gray75", "white"),
+       ncol = 3)
+
+###########################################
+# High DimensionalDimensional Hub results #
+###########################################
+
+unifRec <- matrix(0, ncol = 2, nrow = 6 * 20)
+n.list <- c(100, 200, 500, 1000, 1500, 2000)
+unifRec[, 1] <- rep(n.list, each = 20)
+
+
+dat1 <- read.csv("../matlab_Comps/sparsePWL/res/highD_hubunif_cor_100.csv")[, 2]
+unifRec[1:20, 2]  <- dat1
+dat2 <- read.csv("../matlab_Comps/sparsePWL/res/highD_hubunif_cor_200.csv")[, 2]
+unifRec[21:40, 2]  <- dat2
+dat3 <- read.csv("../matlab_Comps/sparsePWL/res/highD_hubunif_cor_500.csv")[, 2]
+unifRec[41:60, 2]  <- dat3
+
+
+for(i in 1:20){
+  dat10 <- read.csv(paste("../matlab_Comps/sparsePWL/res/highD_hub_unif_cor_1000_", i, ".csv", sep = ""))[, 2]
+  unifRec[i + 60, 2]  <- dat10
+  dat15 <- read.csv(paste("../matlab_Comps/sparsePWL/res/highD_hub_unif_cor_1500_", i, ".csv", sep = ""))[, 2]
+  unifRec[i + 80, 2]  <- dat15
+  dat2000 <- read.csv(paste("../matlab_Comps/sparsePWL/res/highD_hub_unif_cor_2000_", i, ".csv", sep = ""))[, 2]
+  unifRec[i + 100, 2]  <- dat2000
+}
+
+
+
+preselect.rec <- matrix(0, nrow = 100, ncol = 2)
+preselect.rec[, 1] <- rep(c(100, 200, 500, 1000, 1500), each = 20)
+
+preselect.rec[1:20, 2] <- read.csv("../matlab_Comps/sparsePWL/res/pwl_cor_hub_100.csv")[, 2]
+preselect.rec[21:40, 2] <- read.csv("../matlab_Comps/sparsePWL/res/pwl_cor_hub_200.csv")[, 2]
+preselect.rec[41:60, 2] <- read.csv("../matlab_Comps/sparsePWL/res/pwl_cor_hub_500.csv")[, 2]
+
+for(i in 1:20){
+  preselect.rec[60+i, 2] <- read.csv(paste("../matlab_Comps/sparsePWL/res/pwl_cor_hub_1000_",i, ".csv", sep = ""))[, 2]
+  preselect.rec[80+i, 2] <- read.csv(paste("../matlab_Comps/sparsePWL/res/pwl_cor_hub_1500_",i, ".csv", sep = ""))[, 2]
+}
+
+preselect.me.rec <- matrix(0, nrow = 100, ncol = 2)
+preselect.me.rec[, 1] <- rep(c(100, 200, 500, 1000, 1500), each = 20)
+
+preselect.me.rec[1:20, 2] <- read.csv("../matlab_Comps/sparsePWL/res/preSelect_hub_unif_cor_100.csv")[, 2]
+preselect.me.rec[21:40, 2] <- read.csv("../matlab_Comps/sparsePWL/res/preSelect_hub_unif_cor_200.csv")[, 2]
+preselect.me.rec[41:60, 2] <- read.csv("../matlab_Comps/sparsePWL/res/preSelect_hub_unif_cor_500.csv")[, 2]
+
+for(i in 1:20){
+  preselect.me.rec[60+i, 2] <- read.csv(paste("../matlab_Comps/sparsePWL/res/preSelect_hub_unif_cor_1000_",i, ".csv", sep = ""))[, 2]
+  preselect.me.rec[80+i, 2] <- read.csv(paste("../matlab_Comps/sparsePWL/res/preSelect_hub_unif_cor_1500_",i, ".csv", sep = ""))[, 2]
+}
+
+
+
+holder <- data.frame(matrix(0, ncol = 3, nrow = 100 * 3))
+holder[1:100, ] <- cbind(rep("PW+P", 100), preselect.rec)
+holder[101:200, ] <- cbind(rep("HDL+P", 100), preselect.me.rec)
+holder[201:300, ] <- cbind(rep("HDL", 100), unifRec[1:100,])
+holder[,1] <- factor(as.character(holder[,1]), levels = c("HDL", "HDL+P", "PW+P"))
+holder[,2] <- factor(as.character(holder[,2]), levels = c(100, 200, 500, 1000, 1500))
+
+bp <- boxplot(as.numeric(holder[, 3])~holder[, 1] + holder[, 2], ylim = c(-.5, 1), col = c("gray50", "gray75", "white"), xaxt = "n",
+              at = rep(c(1:5) * 3 - 1, each = 3) + c(-.6, 0, .6), boxwex = .5, ylab = "Kendalls Tau", xlab = "p", main = "Hub Graphs")
+axis(side = 1, at = c(1:5) * 3 - 1,labels = c(100, 200, 500, 1000, 1500), lwd.ticks = F)
+abline(v = c(1:4) * 3 + .55, lty = 3)
+abline(h = 0, col = "red")
+bp <- boxplot(as.numeric(holder[, 3])~holder[, 1] + holder[, 2], ylim = c(-.5, 1), col = c("gray50", "gray75", "white"), xaxt = "n",
+              at = rep(c(1:5) * 3 - 1, each = 3) + c(-.6, 0, .6), boxwex = .5, ylab = "Kendalls Tau", xlab = "p", add = T)
+legend(x = "bottom", legend = c("HDL", "HDL+P", "PW+P"), col = c("gray50", "gray75", "white"), fill = c("gray50", "gray75", "white"),
+       ncol = 3)
+
+@
+
+
+
+The performance of PW+P, even though it is last, is still surprisingly good. If we look at the \% of times that the PW+P procedure orients edges in the right direction (i.e., not necessarily a true edge, but at least pointing downstream), we see that it consistently gets roughly 55\% correct and doesn't go above that even as the sample size increases. However, when we use OLS to estimate the magnitude of the edges, the incorrectly oriented edges tend to have a smaller absolute value. Thus, even though we are orienting the edge correclty only 55\% of the time, the incorrect edges get thresholded away when we order the nodes into a DAG and so PW+P still seems to do reasonably well as measured by Kendall's tau. Below is an example of the absolute value of the edgeweights for the correct and incorrect edges. The data is from run one of $p = 1000$ with the hub graph setting. All the edgweights for the incorrect edges are clustered around 0, whereas for the correct edges there is a group around (.5, 1). 
+
+<<echo = FALSE, fig.align='center', fig.width = 8, fig.height = 6>>=
+i <- 2
+adj <- as.matrix(read.csv(paste("../matlab_Comps/sparsePWL/res/estB_hub_1000_", i, ".csv", sep = ""), header = T))[,-1]
+
+par(mfrow = c(2,1))
+hist(abs(adj[upper.tri(adj) & adj != 0]), xlim = c(0, 1.2), main = paste(sum(upper.tri(adj) & adj != 0)," Reversed edges"), xlab = "edgeweights")
+hist(abs(adj[lower.tri(adj) & adj != 0]), xlim = c(0, 1.2), main = paste(sum(lower.tri(adj) & adj != 0)," Correct edges"), xlab = "edgeweights")
+
+@
+ 
+
+ 
+
+
+\end{document}

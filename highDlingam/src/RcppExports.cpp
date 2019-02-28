@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // calcTauC
 Rcpp::List calcTauC(int pa, const arma::uvec& ch, int k, const arma::umat& condSets, const arma::umat& anSets, const arma::mat& Y, const arma::mat& yty);
-RcppExport SEXP highDLingam_calcTauC(SEXP paSEXP, SEXP chSEXP, SEXP kSEXP, SEXP condSetsSEXP, SEXP anSetsSEXP, SEXP YSEXP, SEXP ytySEXP) {
+RcppExport SEXP _highDLingam_calcTauC(SEXP paSEXP, SEXP chSEXP, SEXP kSEXP, SEXP condSetsSEXP, SEXP anSetsSEXP, SEXP YSEXP, SEXP ytySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -25,7 +25,7 @@ END_RCPP
 }
 // calcTauC1
 Rcpp::List calcTauC1(int pa, const arma::uvec& ch, int k, const arma::umat& condSets, const arma::umat& anSets, const arma::mat& Y, const arma::mat& yty);
-RcppExport SEXP highDLingam_calcTauC1(SEXP paSEXP, SEXP chSEXP, SEXP kSEXP, SEXP condSetsSEXP, SEXP anSetsSEXP, SEXP YSEXP, SEXP ytySEXP) {
+RcppExport SEXP _highDLingam_calcTauC1(SEXP paSEXP, SEXP chSEXP, SEXP kSEXP, SEXP condSetsSEXP, SEXP anSetsSEXP, SEXP YSEXP, SEXP ytySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -42,7 +42,7 @@ END_RCPP
 }
 // calcTauMultiC
 arma::vec calcTauMultiC(int pa, const arma::uvec& ch, int k, const arma::umat& condSets, const arma::umat& anSets, const arma::mat& Y, const arma::mat& yty);
-RcppExport SEXP highDLingam_calcTauMultiC(SEXP paSEXP, SEXP chSEXP, SEXP kSEXP, SEXP condSetsSEXP, SEXP anSetsSEXP, SEXP YSEXP, SEXP ytySEXP) {
+RcppExport SEXP _highDLingam_calcTauMultiC(SEXP paSEXP, SEXP chSEXP, SEXP kSEXP, SEXP condSetsSEXP, SEXP anSetsSEXP, SEXP YSEXP, SEXP ytySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -56,4 +56,16 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(calcTauMultiC(pa, ch, k, condSets, anSets, Y, yty));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_highDLingam_calcTauC", (DL_FUNC) &_highDLingam_calcTauC, 7},
+    {"_highDLingam_calcTauC1", (DL_FUNC) &_highDLingam_calcTauC1, 7},
+    {"_highDLingam_calcTauMultiC", (DL_FUNC) &_highDLingam_calcTauMultiC, 7},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_highDLingam(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

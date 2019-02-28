@@ -2,14 +2,14 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 calcTauC <- function(pa, ch, k, condSets, anSets, Y, yty) {
-    .Call('highDLingam_calcTauC', PACKAGE = 'highDLingam', pa, ch, k, condSets, anSets, Y, yty)
+    .Call('_highDLingam_calcTauC', PACKAGE = 'highDLingam', pa, ch, k, condSets, anSets, Y, yty)
 }
 
 calcTauC1 <- function(pa, ch, k, condSets, anSets, Y, yty) {
-    .Call('highDLingam_calcTauC1', PACKAGE = 'highDLingam', pa, ch, k, condSets, anSets, Y, yty)
+    .Call('_highDLingam_calcTauC1', PACKAGE = 'highDLingam', pa, ch, k, condSets, anSets, Y, yty)
 }
 
 calcTauMultiC <- function(pa, ch, k, condSets, anSets, Y, yty) {
-    .Call('highDLingam_calcTauMultiC', PACKAGE = 'highDLingam', pa, ch, k, condSets, anSets, Y, yty)
+    .Call('_highDLingam_calcTauMultiC', PACKAGE = 'highDLingam', pa, ch, k, condSets, anSets, Y, yty)
 }
 

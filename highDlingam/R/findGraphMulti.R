@@ -20,6 +20,7 @@
 findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, B = NULL,
                            cutOffScaling = .5, verbose = T) {
   
+  parents <- list()
   # Test Statistic
   .calcTau <- function(k, pa, ch) {
     abs(mean(pa^(k - 1) * ch) * mean(pa^2) - mean(pa^k) * mean(pa * ch))
@@ -46,22 +47,22 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, B = NULL,
       ### There was a new root added and it is in the conditionSet
       ### So we have new sets to test
       
-        
+      
       ### Only consider conditioning subsets which include lastRoot ###
       ### This ensures we don't re-test a set, but storing everything in memory
       ### can be prohibitive if we look at the min_{over sets} aggregateStat(all other nodes)
       ### instead of aggregateStat(min_{over sets} all other nodes )
       
-        
+      
       ### If considering all subsets smaller than maxInDegree, then start at subset of 
       ### largest.set.size is the largest set we should consider
       size.of.set <- min(maxInDegree, length(conditionSet))
       
       if(length(setdiff(conditionSet, lastRoot)) == 1){
-          conditionSubSet <- matrix(setdiff(conditionSet, lastRoot), nrow = 1, ncol = 1)
+        conditionSubSet <- matrix(setdiff(conditionSet, lastRoot), nrow = 1, ncol = 1)
       }  else {
         conditionSubSet <- t(combn(setdiff(conditionSet, lastRoot),
-                                     size.of.set - 1))
+                                   size.of.set - 1))
       }
       
       anSets <- t(apply(conditionSubSet, MAR = 1, function(x){setdiff(conditionSet, x)}))
@@ -72,15 +73,15 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, B = NULL,
       # always include last root in the conditioning set  
       conditionSubSet <- cbind(rep(lastRoot, dim(conditionSubSet)[1]), conditionSubSet)
       pruneStat <- calcTauMultiC(i - 1, j - 1, degree, 
-                                                 conditionSubSet - 1, anSets - 1, Y,  yty)
+                                 conditionSubSet - 1, anSets - 1, Y,  yty)
       # only return the test stat values which were ever touched
-        return(pruneStat)
-      }
+      return(pruneStat)
     }
+  }
   ################### End getTau Function ###################
   
   cutOff <- 0
-    
+  
   # topological ordering of nodes
   ordered <- c()
   p <- dim(Y)[2]
@@ -92,21 +93,22 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, B = NULL,
   pruneStats <- matrix(1e5, nrow =  p, ncol = p)
   diag(pruneStats) <- 0
   
+  
   while(length(unordered) > 1){
     
     # Testing for Root
     output <- foreach(i = unordered) %dopar%{
       
       if(!is.null(B)){
-        condSet <- intersect(which(B[i, ] != 0), ordered)
+        condSet <- union(intersect(ordered, which(B[i, ] != 0) ), ordered[length(ordered)])
       } else {
         condSet <- union(intersect(ordered, which(pruneStats[i, ] > cutOff)), ordered[length(ordered)])  
       }
       ### Test to see if i has any parents left in unordered
       list(condSet = condSet,
            tauMin = .getTauMulti(i, j = unordered, degree = degree, lastRoot = ordered[length(ordered)],
-                      conditionSet = condSet,
-                      maxInDegree = maxInDegree, Y = Y)
+                                 conditionSet = condSet,
+                                 maxInDegree = maxInDegree, Y = Y)
       )
     }
     
@@ -116,15 +118,15 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, B = NULL,
     
     pruneStats[unordered, ] <- pmin(pruneStats[unordered, ], outputTau)
     diag(pruneStats) <- 0
-
+    
     output_tauStats <- apply(pruneStats[unordered, unordered], MAR = 1,
-                        # uses either sum or max
-                        max)
+                             # uses either sum or max
+                             max)
     
     root <- unordered[which.min(output_tauStats)]
     
     cutOff <- max(cutOff, min(output_tauStats) * cutOffScaling)
-
+    
     
     
     # Update quantities
@@ -144,6 +146,7 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, B = NULL,
       # print(round(output_tauStats, 3))
       cat("Cutoff: "); cat(round(cutOff,3)); cat("\n\n")
     }
+    parents[[length(parents) + 1]] <- output[[which.min(output_tauStats)]]$condSet
     
     ordered <- c(ordered, root)
     unordered <- setdiff(unordered, root)
@@ -151,6 +154,7 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, B = NULL,
     
   }
   ordered <- c(ordered, unordered) 
+  parents[[length(parents) + 1]] <- union(intersect(ordered, which(pruneStats[unordered, ] > cutOff)), ordered[length(ordered)])
   
-  return(list(topOrder = ordered, prune = pruneStats))
+  return(list(topOrder = ordered, prune = pruneStats, cutoff = cutOff, parents = parents))
 }

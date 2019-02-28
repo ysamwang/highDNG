@@ -1,0 +1,12 @@
+n.list = [10 20 50 100];
+resOut = zeros(4, 4);
+
+sim.size = 1000;
+
+for n.ind = 1:4
+ res.inter = zeros(sim.size, 2);
+ for s = 1:sim.size
+     res.inter(s, :) = horseRace(n.list(n.ind), 'gamma');
+ end
+ resOut(n.ind, 1:2) = mean(res.inter);
+end

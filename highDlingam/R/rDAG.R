@@ -22,7 +22,7 @@ rDAG <- function(p, n, maxInDegree = 4, dist = "unif", lowScale = 1, highScale =
   B[2, 1] <- runif(1, lowEdge, highEdge) * sample(c(-1, 1), size = 1)
   
   if(dist == "gamma"){  
-      errs <- matrix(rgamma(n * p, .5, sqrt(.5)) - 1/sqrt(2), nrow = n, ncol = p)
+      errs <- matrix(rgamma(n * p, 2, sqrt(2)) - 2/ sqrt(2), nrow = n, ncol = p)
       scale.param <- runif(p, lowScale, highScale)
       errs <- t(t(errs) * scale.param)
   } else if (dist == "unif"){
@@ -31,6 +31,8 @@ rDAG <- function(p, n, maxInDegree = 4, dist = "unif", lowScale = 1, highScale =
       errs <- t(t(errs) * scale.param)
   } else if(dist == "gauss"){
     errs <- matrix(rnorm(n * p), nrow = n, ncol = p)
+    scale.param <- runif(p, lowScale, highScale)
+    errs <- t(t(errs) * scale.param)
   } else if (dist == "t"){
       errs <- matrix(rt(n * p, df = 7) / sqrt(7 / 5), nrow = n, ncol = p)
       scale.param <- runif(p, lowScale, highScale)
@@ -43,6 +45,7 @@ rDAG <- function(p, n, maxInDegree = 4, dist = "unif", lowScale = 1, highScale =
   }
   Y <- solve(diag(rep(1, p)) - B, t(errs))
   Y <- t(Y)
+  
 
   
   return(list(B = B, Y = Y, errs = errs, scale.param = scale.param))
