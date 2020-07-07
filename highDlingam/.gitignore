@@ -1,3 +1,4 @@
 *.Rhistory
 writing/
 *.gz
+tests/testOutput/
