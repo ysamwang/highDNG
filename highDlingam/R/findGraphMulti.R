@@ -1,22 +1,33 @@
-#############################################################################################################
-#     Recover graph from observational non-Gaussian Data
-#
-#     We calculate tau_i <- max_j min_C tau_{i-> j.C}
-#
-#
-# Y:              n x p matrix of observations with sample in row, variable in column
-# maxInDegree:    Assumed largest in-degree
-# degree:         The assumed degree of non-Gaussianity
-# pruningCut:     Fixed cut-off value
-# fun:            The aggregation function. Should be max
-# subsets:        Whether to condition on all subsets of variables, or just test sets of largest size
-# B:              True DAG structure if available
-# cutOffScaling:  Scaling factor for how to set the cutOff
-# verbose:        Print progress updates
-#
-#############################################################################################################
-
-
+#' Causal discovery with high dimensional non-Gaussian data
+#' 
+#' 
+#' Estimates a causal ordering for high dimensional SEM with non-Gaussian errors. 
+#' This requires setting up a backend before hand which is typically for parallel computation, but can
+#' be single threaded if multi-core computation is not available. See example
+#' 
+#'  
+#' @param Y n x p matrix of observations with sample in row, variable in column
+#' @param maxInDegree Assumed largest in-degree
+#' @param degree The degree of the moment which is non-Gaussianity (i.e., this is K in the paper)
+#' @param B true adjacency matrix if available (used primarily for debugging and simulations)
+#' @param cutOffScaling alpha value for pruning away false parents
+#' @param verbose:        Print progress updates
+#' @return \item{topOrder}{Estimated topological ordering of variables}
+#'    \item{prune}{final values of tau statistics}
+#'    \item{cutoff}{final value of cut off parameter}
+#'    \item{parents}{estimated parent sets}
+#'    
+#' @examples
+#' \dontrun{
+#' library(doParallel)
+#' ncores <- 4
+# ncores <- 20 
+#' cl <- makeCluster(ncores)
+#' registerDoParallel(cl)
+#' out_dag <- rDAG(p = 100, n = 50, maxInDeg = 3, dist = "gamma", lowScale = .8, highScale = 1, lowEdge = .65, highEdge = 1)
+#' Y <- out_dag$Y
+#' output <- findGraphMulti(Y, maxInDegree = maxInDegree, cutOffScaling = cs, degree = deg, verbose = F))
+#' }
 findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, B = NULL,
                            cutOffScaling = .5, verbose = T) {
   
@@ -153,8 +164,9 @@ findGraphMulti <- function(Y, maxInDegree = 3, degree = 3, B = NULL,
     
     
   }
-  ordered <- c(ordered, unordered) 
   parents[[length(parents) + 1]] <- union(intersect(ordered, which(pruneStats[unordered, ] > cutOff)), ordered[length(ordered)])
+  ordered <- c(ordered, unordered) 
+  
   
   return(list(topOrder = ordered, prune = pruneStats, cutoff = cutOff, parents = parents))
 }

@@ -1,8 +1,28 @@
-# Generate DAG with set maxInDegree
-# p - number of nodes
-# n - number of samples
-# maxInDeg - maximum number of samples
-# dist - distribution of errors
+#' Causal discovery with high dimensional non-Gaussian data
+#' 
+#' 
+#' Simulates data 
+#' 
+#'  
+#' @param p The number of variables
+#' @param n The number of samples
+#' @param maxInDegree the maximum number of parents any node cna have
+#' @param dist the distribution of the errors. Optios are:
+#' \itemize{
+#' \item  "gamma" for gamma distribution
+#' \item "unif" for uniform distribution
+#' \item "gauss" for Gaussian distribution
+#' \item  "t" for T distribution with 7 df
+#' \item "dexp" for Laplace distribution
+#' }
+#' @param lowScale smallest possible value error standard deviations
+#' @param highScale largest possible value for error standard deviation
+#' @param lowEdge smallest possible value (in abs value) for linear coefficient
+#' @param highEdge largest possible value (in abs value) for linear coefficient 
+#' @return \item{B}{true linear coefficients}
+#'    \item{Y}{realized values}
+#'    \item{errs}{the idiosyncratic errors}
+#'    \item{scale.param}{the sd of each error variable}
 rDAG <- function(p, n, maxInDegree = 4, dist = "unif", lowScale = 1, highScale = 1, lowEdge = .3, highEdge = 1){
   B <- matrix(0, nrow = p, ncol = p)
   for(i in 3:p){

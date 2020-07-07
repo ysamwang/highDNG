@@ -1,9 +1,24 @@
-# Generate DAG with set maxInDegree
-# p - number of nodes
-# n - number of samples
-# maxInDeg - maximum number of samples
-# dist - distribution of errors
-rDAG_hub <- function(p, n, lowScale = .8, highScale = 1, lowEdge = .5, highEdge = 1, nHubs = 3, hubEdge = .2){
+#' Causal discovery with high dimensional non-Gaussian data
+#' 
+#' 
+#' Generates data corresponding to a Hub graph as described in Wang and Drton (2019)
+#' 
+#'  
+#' @param p the number of variables in the graph
+#' @param n the number of samples of the p variables
+#' @param lowScale the standard deviation for the error term for each node is drawn uniformly from [lowScale, highScale]
+#' @param highScale the standard deviation for the error term for each node is drawn uniformly from [lowScale, highScale]
+#' @param lowEdge the coefficient for each edge v -> v+1 is drawn uniformly from +/-[lowEdge, highEdge]
+#' @param highEdge the coefficient for each edge v -> v+1 is drawn uniformly from +/-[lowEdge, highEdge]
+#' @param nHubs the number of hub nodes
+#' @param hubEdge the coefficient for each edge from a hub to a downstream node is set to hubEdge. This should be appropriately small
+#'    so the variance of Y does not blow up
+#' @param p
+#' @return \item{B}{the random coefficient matrix}
+#'    \item{Y.unif}{the sampled data}
+#'    \item{scale.param}{the error standard deviations}
+
+rDAG_hub <- function(p, n, lowScale = .8, highScale = 1, lowEdge = .65, highEdge = 1, nHubs = 3, hubEdge = .2){
   B <- matrix(0, nrow = p, ncol = p)
   
   # assign each non-hub to be the child of a hub
